@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PALAMINI AUTO – Prenota un Servizio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700;900&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue:    #1a73e8;
+    --blue-dk: #1557b0;
+    --bg:      #e8f0fb;
+    --white:   #ffffff;
+    --text:    #1a1a2e;
+    --muted:   #5f6368;
+    --radius:  16px;
+    --shadow:  0 4px 24px rgba(26,115,232,.15);
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'Barlow', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* ── LANDING ────────────────────────────────────── */
+  #landing {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 16px 40px;
+    transition: opacity .35s ease;
+  }
+
+  .brand-bar {
+    width: 100%;
+    max-width: 560px;
+    text-align: center;
+    padding: 36px 0 28px;
+  }
+  .brand-bar h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(28px, 7vw, 46px);
+    font-weight: 900;
+    letter-spacing: .5px;
+    color: var(--blue);
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .brand-bar p {
+    margin-top: 6px;
+    font-size: 15px;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: .3px;
+  }
+
+  .prompt {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    margin-bottom: 22px;
+    letter-spacing: .2px;
+  }
+
+  .cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.card:nth-child(1) { background: linear-gradient(135deg, rgba(198,40,40,0.18), rgba(198,40,40,0.32)); border: 2px solid rgba(198,40,40,0.55); }
+.card:nth-child(2) { background: linear-gradient(135deg, rgba(46,125,50,0.18),  rgba(46,125,50,0.32));  border: 2px solid rgba(46,125,50,0.55);  }
+.card:nth-child(3) { background: linear-gradient(135deg, rgba(245,167,0,0.18),  rgba(245,167,0,0.32));  border: 2px solid rgba(245,167,0,0.55);  }
+.card:nth-child(4) { background: linear-gradient(135deg, rgba(26,115,232,0.18), rgba(26,115,232,0.32)); border: 2px solid rgba(26,115,232,0.55); }
+
+.card:nth-child(1):hover { border-color: rgba(198,40,40,0.85);  box-shadow: 0 8px 28px rgba(198,40,40,0.25); }
+.card:nth-child(2):hover { border-color: rgba(46,125,50,0.85);   box-shadow: 0 8px 28px rgba(46,125,50,0.25);  }
+.card:nth-child(3):hover { border-color: rgba(245,167,0,0.85);   box-shadow: 0 8px 28px rgba(245,167,0,0.25);  }
+.card:nth-child(4):hover { border-color: rgba(26,115,232,0.85);  box-shadow: 0 8px 28px rgba(26,115,232,0.25); }
+
+.card {
+  background: var(--white); /* sovrascritto da nth-child sopra */
+  border-radius: var(--radius);
+  padding: 28px 16px 24px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.card:active { transform: scale(.97); }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: var(--blue);
+    box-shadow: 0 8px 32px rgba(26,115,232,.22);
+  }
+  .card:active { transform: scale(.97); }
+
+  .card-emoji {
+    font-size: 42px;
+    line-height: 1;
+  }
+  .card-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--text);
+    line-height: 1.25;
+  }
+
+  /* disabled / coming-soon card */
+  .card.coming-soon {
+    opacity: .55;
+    cursor: default;
+  }
+  .card.coming-soon:hover {
+    transform: none;
+    border-color: transparent;
+    box-shadow: var(--shadow);
+  }
+  .badge-soon {
+    background: #f1f3f4;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 3px 10px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+
+  .footer-note {
+    margin-top: 32px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+    max-width: 340px;
+    line-height: 1.5;
+  }
+
+  /* ── FRAME VIEW ─────────────────────────────────── */
+  #frame-view {
+  display: none;
+  flex-direction: column;
+  height: 100dvh;
+  }
+
+  .frame-topbar {
+    background: var(--white);
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    flex-shrink: 0;
+  }
+
+  #back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 2px solid var(--blue);
+    color: var(--blue);
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all .2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  #back-btn:hover {
+    background: var(--blue);
+    color: #fff;
+  }
+
+  .topbar-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text);
+    letter-spacing: .3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .frames-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+  .service-frame {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: none;
+    overflow: auto;
+  }
+  .service-frame.active { display: block; }
+
+  /* transition */
+  #landing.fade-out { opacity: 0; pointer-events: none; }
+  #frame-view.fade-in { animation: fadeIn .3s ease forwards; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<!-- ══ LANDING PAGE ══════════════════════════════════════════════ -->
+<div id="landing">
+  <div class="brand-bar">
+   <h1>Booking Online</h1>
+    <h1>Palamini Auto</h1>
+    <p>Via San Luigi 1/A &nbsp;·&nbsp; Cesano Maderno</p>
+  </div>
+
+  <p class="prompt">Seleziona il servizio che ti interessa:</p>
+
+  <div class="cards-grid">
+    <div class="card" onclick="apriServizio('sat')">
+      <div class="card-emoji">
+  <svg width="46" height="46" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg">
+    <path d="M14 11 Q10 18 14 25" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M32 11 Q36 18 32 25" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M9 6 Q3 18 9 30" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+    <path d="M37 6 Q43 18 37 30" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+    <circle cx="23" cy="18" r="3.5" fill="#888"/>
+    <line x1="23" y1="21" x2="23" y2="28" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+    <path d="M23 28 Q18 32 13 44" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M23 28 Q28 32 33 44" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="17" y1="33" x2="29" y2="33" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+    <line x1="14" y1="40" x2="32" y2="40" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+    <line x1="11" y1="44" x2="35" y2="44" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+  </svg>
+</div>
+      <div class="card-label">Localizzatori Satellitari Assicurativi o Move-In</div>
+    </div>
+
+    <div class="card" onclick="apriServizio('man')">
+      <div class="card-emoji">
+  <svg width="46" height="46" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+  </svg>
+</div>
+      <div class="card-label">Manutenzione Auto (Tagliando, cambio olio)</div>
+    </div>
+
+    <div class="card" onclick="apriServizio('pnm')">
+      <div class="card-emoji">
+  <svg width="46" height="46" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="23" cy="23" r="21" fill="#222"/>
+    <circle cx="23" cy="23" r="14.5" fill="#444"/>
+    <circle cx="23" cy="23" r="13" fill="#cacaca"/>
+    <path d="M23 10 L26 21 L20 21 Z" fill="#aaa"/>
+    <path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(72 23 23)"/>
+    <path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(144 23 23)"/>
+    <path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(216 23 23)"/>
+    <path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(288 23 23)"/>
+    <circle cx="23" cy="23" r="5" fill="#999"/>
+    <circle cx="23" cy="23" r="2.5" fill="#666"/>
+  </svg>
+</div>
+      <div class="card-label">Cambio Stagionale Pneumatici</div>
+    </div>
+
+    <div class="card" onclick="apriServizio('rev')">
+  <div class="card-emoji">
+  <svg width="46" height="46" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg">
+    <rect x="7" y="5" width="26" height="34" rx="3" fill="#cacaca" stroke="#aaa" stroke-width="1.5"/>
+    <path d="M27 5 L33 11 L27 11 Z" fill="#aaa"/>
+    <path d="M27 5 L27 11 L33 11" fill="none" stroke="#999" stroke-width="1.5"/>
+    <rect x="16" y="3" width="8" height="5" rx="2.5" fill="#888"/>
+    <line x1="13" y1="20" x2="27" y2="20" stroke="#999" stroke-width="2" stroke-linecap="round"/>
+    <line x1="13" y1="26" x2="27" y2="26" stroke="#999" stroke-width="2" stroke-linecap="round"/>
+    <line x1="13" y1="32" x2="21" y2="32" stroke="#999" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="34" cy="36" r="9" fill="#2e7d32"/>
+    <polyline points="29,36 33,40 40,30" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</div>
+  <div class="card-label">Revisione Ministeriale</div>
+   </div>
+  </div>
+
+  <p class="footer-note">
+    Riceverai una conferma via email dopo la prenotazione.
+  </p>
+</div>
+
+<!-- ══ FRAME VIEW ════════════════════════════════════════════════ -->
+<div id="frame-view">
+  <div class="frame-topbar">
+    <button id="back-btn" onclick="tornaAlMenu()">&#8592; Menu</button>
+    <span class="topbar-title" id="topbar-title">Prenotazione</span>
+  </div>
+  <div class="frames-wrapper">
+    <iframe id="frame-sat" class="service-frame" title="Localizzatori SAT"></iframe>
+    <iframe id="frame-man" class="service-frame" title="Manutenzione Auto"></iframe>
+    <iframe id="frame-pnm" class="service-frame" title="Pneumatici"></iframe>
+    <iframe id="frame-rev" class="service-frame" title="Revisione Ministeriale"></iframe>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// ⚙️  UNICA VARIABILE DA AGGIORNARE
+// Dopo aver deployato GAS_UNIFICATO.js come Web App,
+// incolla qui sotto l'URL che ti dà Google Apps Script.
+// ═══════════════════════════════════════════════════════════════
+const API_URL_UNIFICATO = 'https://script.google.com/macros/s/AKfycbzjxKHVPHjn18LDf-DWvC5GgD4p3oGoJvPgBweUyJHswy1OfZGhO45IlWQz7bHQgXxx/exec';
+
+// ═══════════════════════════════════════════════════════════════
+// HTML DEI TRE MODULI — __API_URL__ viene sostituito a runtime
+// ═══════════════════════════════════════════════════════════════
+
+const HTML_SAT = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MODULO PRENOTAZIONE LOCALIZZATORI</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Roboto, Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; background: #e6f0fa; font-size: 16px; }
+  #formWrapper { width: 100%; max-width: 480px; padding: 10px 20px; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); margin: 20px auto; }
+  h2 { text-align: center; font-size: 22px; margin-bottom: 10px; }
+  h4 { text-align: center; font-size: 16px; color: #555; margin: 5px 0; font-weight: normal; }
+  label { display: block; font-weight: bold; margin-top: 18px; font-size: 16px; text-align: center; }
+  input, select { width: 100%; padding: 16px 14px; margin-top: 5px; font-size: 20px; border-radius: 8px; border: 1px solid #ccc; display: block; text-align: center; transition: border 0.3s; }
+  .input-error { border: 2px solid #dc3545 !important; background-color: #fff8f8; }
+  .error-msg { color: #dc3545; font-size: 14px; margin-top: 5px; margin-bottom: 5px; display: none; text-align: center; font-weight: bold; }
+  .step-container { display: none; }
+  .step-active { display: block; animation: fadeIn 0.5s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .nav-buttons { display: flex; gap: 10px; margin-top: 20px; }
+  button { flex: 1; background-color: #1a73e8; color: white; border: none; cursor: pointer; font-size: 20px; padding: 18px; border-radius: 8px; font-weight: bold; transition: all 0.3s; }
+  button:hover { background: #1557b0; }
+  .btn-indietro { background-color: #6c757d !important; }
+  .bottoni-tipo { display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
+  .bottoni-tipo button { background-color: #ccc; font-size: 16px; min-height: 70px; color: #333; }
+  .bottoni-tipo button.selezionato { background-color: #1a73e8; color: white; }
+  #infoRiconsegna { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin: 15px 0; border-radius: 8px; font-weight: bold; color: #856404; text-align: center; display: none; }
+  .avviso-importante { background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin: 20px 0; font-size: 14px; line-height: 1.6; color: #856404; text-align: center; }
+  .avviso-importante strong { display: block; font-size: 16px; margin-bottom: 8px; color: #000; }
+  #loadingOverlay, #sendingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e6f0fa; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-weight: 600; font-size: 20px; color: #666; }
+  .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #1a73e8; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  #dateUnavailableOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; justify-content: center; align-items: center; padding: 20px; }
+  .modal-content { background: #fff; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%; border: 3px solid #f44336; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .modal-content h3 { color: #d32f2f; margin-top: 0; }
+  .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
+</style>
+</head>
+<body onload="init()">
+<div id="loadingOverlay"><div class="spinner"></div><p>Caricamento modulo in corso...</p></div>
+<div id="sendingOverlay" style="display:none;"><div class="spinner"></div><p id="sendingText">Invio in corso...</p></div>
+<div id="dateUnavailableOverlay">
+  <div class="modal-content">
+    <h3>⚠️ DATA NON PIÙ DISPONIBILE</h3>
+    <p>La data che avevi scelto è appena stata prenotata da un altro utente.<br><br>La lista è stata aggiornata, seleziona una nuova data per favore.</p>
+    <button type="button" onclick="chiudiAvvisoData()" style="background-color: #f44336;">AVANTI</button>
+  </div>
+</div>
+<div id="formWrapper" style="display:none;">
+  
+  <form id="prenotaForm" onsubmit="return false;">
+    <div id="step1" class="step-container step-active">
+      <div style="background:#f1f3f4; border:2px solid #dadce0; border-radius:10px; padding:14px 16px; margin:16px 0 8px; font-size:14px; line-height:1.6; color:#444; text-align:center;">
+  Per il solo <strong>ritiro del dispositivo</strong> (senza montaggio sul veicolo, solo per le polizze ConTe o BeRebel) oppure per la <strong>consegna del dispositivo</strong> (senza smontaggio dal veicolo, di qualsiasi assicurazione) <strong>NON è necessario compilare il modulo</strong>.<br><br>
+  È sufficiente recarsi in officina dal <strong>Lunedì al Venerdì</strong>, dalle <strong>9:00 alle 12:00</strong> e dalle <strong>14:30 alle 17:30</strong>.<br><br>
+  <span style="color:#c62828; font-weight:700; font-size:15px;">⚠️ NON ESEGUIAMO LAVORAZIONI SUI MOTOCICLI<br>(CONTATTATE IL VOSTRO ASSICURATORE)</span>
+</div>
+      <label>SU QUALE LOCALIZZATORE DEVI EFFETTUARE LA LAVORAZIONE?</label>
+      <div class="bottoni-tipo">
+        <button type="button" id="btnAssicurativo" onclick="selezionaTipo('assicurativo')">ASSICURATIVO</button>
+        <button type="button" id="btnMoveIn" onclick="selezionaTipo('movein')">MOVE-IN<br>(regione lombardia)</button>
+      </div>
+      <div id="err_tipo" class="error-msg">Selezionare una tipologia</div>
+      <div class="nav-buttons">
+        <button type="button" onclick="avantiStep1()">Avanti</button>
+      </div>
+    </div>
+    <div id="step2" class="step-container">
+      <label>EMAIL:</label>
+      <input type="email" id="email" oninput="rimuoviErrore(this)">
+      <div id="err_email" class="error-msg">Inserire una mail valida</div>
+      <label>TARGA AUTO:</label>
+      <input type="text" id="targa" maxlength="7" style="text-transform:uppercase;" oninput="rimuoviErrore(this)">
+      <div id="err_targa" class="error-msg">Campo obbligatorio</div>
+      <label>NOME E COGNOME ASSICURATO:</label>
+      <input type="text" id="nomeCognome" oninput="rimuoviErrore(this)">
+      <div id="err_nomeCognome" class="error-msg">Campo obbligatorio</div>
+      <label>CONTATTO TELEFONICO:</label>
+      <input type="tel" id="telefono" oninput="rimuoviErrore(this)">
+      <div id="err_telefono" class="error-msg">Campo obbligatorio</div>
+      <label>NOME COMPAGNIA ASSICURATIVA o PROVIDER MOVE-IN</label>
+      <select id="compagnia" onchange="checkConTeMessage(); rimuoviErrore(this)"></select>
+      <div id="err_compagnia" class="error-msg">Campo obbligatorio</div>
+      <div id="msg_conte" style="display:none; color: #d32f2f; background: #ffe6e6; border: 2px solid #d32f2f; border-radius: 8px; padding: 10px; margin-top: 15px; font-weight: bold; font-size: 14px; text-align: center;">
+      ⚠️ ATTENZIONE: assicuratevi di aver accettato le condizioni generali di acquisto (CGA) ricevute via email e/o sms da parte di Octo Telematics altrimenti non ci sarà possibile proseguire con il montaggio, grazie.
+      </div>
+      <div class="nav-buttons">
+      <button type="button" class="btn-indietro" onclick="changeStep(-1)">Indietro</button>
+      <button type="button" onclick="changeStep(1)">Avanti</button>
+      </div>
+    </div>
+    <div id="step3" class="step-container">
+      <div class="avviso-importante">
+        <strong>IMPORTANTE DA LEGGERE!</strong>
+        Per gli smontaggi: munirsi TASSATIVAMENTE del foglio di installazione per conoscere la posizione del localizzatore all'interno dell'auto (NON serve se si conosce l'ESATTA posizione del localizzatore all'interno dell'auto).
+        <br><br>ATTENZIONE: L'abitacolo e il baule del veicolo devono essere PULITI e PRIVI di oggetti personali.<br><br>
+        NON prenotare tramite questo modulo la SOLA consegna o la riconsegna del localizzatore (ConTe, BeRebel), è sufficiente passare in officina dal lunedì al venerdì 9:00 - 12:15 e 14:30 - 17:30 per il ritiro senza appuntamento. Prenotare solo se si desidera la lavorazione di montaggio o smontaggio.
+      </div>
+      <div class="nav-buttons">
+        <button type="button" class="btn-indietro" onclick="changeStep(-1)">Indietro</button>
+        <button type="button" onclick="changeStep(1)">Avanti</button>
+      </div>
+    </div>
+    <div id="step4" class="step-container">
+      <label>LAVORAZIONE RICHIESTA</label>
+      <select id="lavorazione" onchange="aggiornaVisibilita(); rimuoviErrore(this)">
+        <option value="" selected disabled>Seleziona...</option>
+        <option value="montaggio">MONTAGGIO (massimo 50 minuti di fermo auto)</option>
+        <option value="smontaggio">SMONTAGGIO (massimo 50 minuti di fermo auto)</option>
+        <option value="smontmont">SMONTAGGIO + MONTAGGIO (massimo 1,5 ora di fermo auto)</option>
+        <option value="anomalia">ANOMALIA-GUASTO-VERIFICA LOCALIZZATORE (massimo 3 ore di fermo auto)</option>
+        <option value="annullamento">ANNULLAMENTO APPUNTAMENTO</option>
+      </select>
+      <div id="err_lavorazione" class="error-msg">Selezionare una lavorazione</div>
+      <label id="labelNoteCliente">EVENTUALI NOTE CLIENTE:</label>
+      <input type="text" id="notecliente" oninput="rimuoviErrore(this)">
+      <div id="err_notecliente" class="error-msg">Campo obbligatorio per questa selezione</div>
+      <div id="wrapperData" style="display:none;">
+        <label>DATA APPUNTAMENTO:</label>
+        <select id="dataAppuntamento" onchange="aggiornaRiconsegna(); rimuoviErrore(this)"></select>
+        <div id="err_dataAppuntamento" class="error-msg">Selezionare una data</div>
+      </div>
+      <div id="infoRiconsegna"></div>
+      <div class="nav-buttons">
+        <button type="button" class="btn-indietro" onclick="changeStep(-1)">Indietro</button>
+        <button type="button" id="btnPrenota" onclick="verificaEinvia()">Prenota</button>
+      </div>
+      <div style="background:#ffe6e6; border:2px solid red; border-radius:8px; padding:12px; margin-top:20px; color:red; font-weight:bold; font-size:15px; text-align:center;">
+        ⏰ Si raccomanda di rispettare l'orario prescelto. Con un ritardo superiore ai 10 minuti l'appuntamento verrà considerato annullato.
+      </div>
+    </div>
+  </form>
+</div>
+<div id="successOverlay" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#f1f8e9; z-index:300; text-align:center; padding:40px 30px; border-radius:12px; box-shadow:0 4px 25px rgba(0,0,0,0.3); border:4px solid #4caf50; width:90%; max-width:440px;">
+  <h2 style="font-size: 30px; font-weight: 900; margin-bottom: 20px;">✅ MODULO INVIATO CORRETTAMENTE</h2>
+  <p style="font-size: 22px; font-weight: 700; line-height: 1.5;">Si ricorda che è obbligatorio presentarsi in officina il giorno dell'appuntamento con la mail appena ricevuta (controllare anche lo SPAM).</p>
+</div>
+<script>
+const COMPAGNIE_ASSICURATIVE = ["Unipol", "Linear", "Arca", "BeRebel (costo a carico cliente di 18,30\u20ac)", "Groupama", "Generali (prendere appuntamento 7gg dopo emissione polizza)", "Genertel-Jeniot (prendere appuntamento 7gg dopo emissione polizza)", "Cattolica (prendere appuntamento 7gg dopo emissione polizza)", "Tua Assicurazioni", "IntesaSanPaolo", "Allianz", "ConTe-Octo Telematics (costo a carico cliente di 12,20\u20ac)", "Sara Assicurazioni", "Italiana Assicurazioni", "Vodafone", "Reale Mutua", "ALTRO: Inserire nome compagnia assicurativa nel campo NOTE CLIENTE"];
+const COMPAGNIE_MOVEIN = ["MoveIN-Viasat (prendere appuntamento 7gg dopo il pagamento a Viasat)", "MoveIN-Octo Telematics", "MoveIN-Unipol (prendere appuntamento tra almeno 10gg)"];
+const API_URL = '__API_URL__';
+let currentStep = 1;
+let tipoLocalizzatoreSelezionato = null;
+let dateDisponibiliMontaggio = [];
+let dateDisponibiliAnomalia = [];
+async function init() {
+  try {
+    const response = await fetch(API_URL + '?service=sat');
+    const data = await response.json();
+    dateDisponibiliMontaggio = data.dateMontaggio || [];
+    dateDisponibiliAnomalia = data.dateAnomalia || [];
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('formWrapper').style.display = 'block';
+  } catch (e) { alert("Errore caricamento date. Ricarica la pagina."); }
+}
+function selezionaTipo(tipo) {
+  tipoLocalizzatoreSelezionato = tipo;
+  document.getElementById("btnAssicurativo").className = tipo === 'assicurativo' ? 'selezionato' : '';
+  document.getElementById("btnMoveIn").className = tipo === 'movein' ? 'selezionato' : '';
+  const sel = document.getElementById("compagnia");
+  sel.innerHTML = '<option value="" disabled selected>Seleziona...</option>';
+  const lista = tipo === 'assicurativo' ? COMPAGNIE_ASSICURATIVE : COMPAGNIE_MOVEIN;
+  lista.forEach(c => { let o = document.createElement("option"); o.value = c; o.text = c; sel.add(o); });
+  document.getElementById("err_tipo").style.display = 'none';
+}
+function avantiStep1() {
+  if (!tipoLocalizzatoreSelezionato) { document.getElementById("err_tipo").style.display = 'block'; return; }
+  changeStep(1);
+}
+function rimuoviErrore(elemento) {
+  elemento.classList.remove("input-error");
+  const errDiv = document.getElementById("err_" + elemento.id);
+  if (errDiv) errDiv.style.display = "none";
+}
+function changeStep(n) {
+  if (n > 0 && !validaCampiStep()) return;
+  document.getElementById("step" + currentStep).style.display = 'none';
+  currentStep += n;
+  document.getElementById("step" + currentStep).classList.add('step-active');
+  document.getElementById("step" + currentStep).style.display = 'block';
+  window.scrollTo(0,0);
+}
+function validaCampiStep() {
+  if (currentStep === 2) {
+    let valido = true;
+    const email = document.getElementById("email");
+    const errEmail = document.getElementById("err_email");
+    const regexEmail = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+    if (!regexEmail.test(email.value.trim())) { email.classList.add("input-error"); errEmail.style.display = "block"; valido = false; }
+    const campiStandard = ["targa", "nomeCognome", "telefono", "compagnia"];
+    for (let id of campiStandard) {
+      const el = document.getElementById(id);
+      const errEl = document.getElementById("err_" + id);
+      if (!el.value.trim()) { el.classList.add("input-error"); errEl.style.display = "block"; valido = false; }
+    }
+    return valido;
+  }
+  return true;
+}
+function aggiornaVisibilita() {
+  const lav = document.getElementById("lavorazione").value;
+  const wrap = document.getElementById("wrapperData");
+  const selData = document.getElementById("dataAppuntamento");
+  const labelNote = document.getElementById("labelNoteCliente");
+  labelNote.textContent = lav === "smontmont" ? "SCRIVERE ENTRAMBE COMPAGNIE ASSICURATIVE QUA (OBBLIGATORIO):" : (lav === "annullamento" ? "DATA E ORA DELL'APPUNTAMENTO DA ANNULLARE (OBBLIGATORIO):" : "EVENTUALI NOTE CLIENTE:");
+  if (lav && lav !== "annullamento") {
+    wrap.style.display = "block";
+    let base = lav === "anomalia" ? dateDisponibiliAnomalia : dateDisponibiliMontaggio;
+    const mesiItaliani = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+    const oggi = new Date();
+    const domani = new Date(); domani.setDate(oggi.getDate() + 1);
+    const strOggi = oggi.getDate() + " " + mesiItaliani[oggi.getMonth()];
+    const strOggiPadded = oggi.getDate().toString().padStart(2,'0') + " " + mesiItaliani[oggi.getMonth()];
+    const strDomani = domani.getDate() + " " + mesiItaliani[domani.getMonth()];
+    const strDomaniPadded = domani.getDate().toString().padStart(2,'0') + " " + mesiItaliani[domani.getMonth()];
+    const filtrate = base.filter(d => {
+      const dMin = d.toLowerCase();
+      const isOggi = dMin.includes(strOggi) || dMin.includes(strOggiPadded);
+      const isDomani = dMin.includes(strDomani) || dMin.includes(strDomaniPadded);
+      if (isOggi || isDomani) return lav === "smontaggio";
+      return true;
+    });
+    selData.innerHTML = '<option value="" disabled selected>Seleziona...</option>';
+    filtrate.forEach(d => { let o = document.createElement("option"); o.value = d; o.text = d; selData.add(o); });
+  } else {
+    wrap.style.display = "none";
+    selData.value = "";
+  }
+  aggiornaRiconsegna();
+}
+function checkConTeMessage() {
+  const compagniaSel = document.getElementById("compagnia").value;
+  document.getElementById("msg_conte").style.display = compagniaSel.includes("ConTe-Octo Telematics") ? "block" : "none";
+}
+function aggiornaRiconsegna() {
+  const dataTxt = document.getElementById("dataAppuntamento").value;
+  const lav = document.getElementById("lavorazione").value;
+  const info = document.getElementById("infoRiconsegna");
+  if (!dataTxt || !lav || lav === "annullamento") { info.style.display = "none"; return; }
+  const durate = { montaggio: 50, smontaggio: 50, smontmont: 90, anomalia: 180 };
+  const match = dataTxt.match(/(\\d{2}):(\\d{2})/);
+  if (match) {
+    let h = parseInt(match[1]), m = parseInt(match[2]) + durate[lav];
+    while (m >= 60) { m -= 60; h += 1; }
+    const nuovaOra = h.toString().padStart(2,'0') + ":" + m.toString().padStart(2,'0');
+    info.innerHTML = "Data di riconsegna del veicolo stimata: " + dataTxt.replace(/(\\d{2}):(\\d{2})/, nuovaOra);
+    info.style.display = "block";
+  }
+}
+function chiudiAvvisoData() { document.getElementById("dateUnavailableOverlay").style.display = "none"; }
+async function verificaEinvia() {
+  const elLavorazione = document.getElementById("lavorazione");
+  const elNote = document.getElementById("notecliente");
+  const elData = document.getElementById("dataAppuntamento");
+  const lav = elLavorazione.value;
+  const note = elNote.value.trim();
+  const dataScelta = elData.value;
+  let tuttoValido = true;
+  if (!lav) { elLavorazione.classList.add("input-error"); document.getElementById("err_lavorazione").style.display = "block"; tuttoValido = false; }
+  if (lav === "annullamento" || lav === "smontmont") { if (!note) { elNote.classList.add("input-error"); document.getElementById("err_notecliente").style.display = "block"; tuttoValido = false; } }
+  if (lav && lav !== "annullamento" && !dataScelta) { elData.classList.add("input-error"); document.getElementById("err_dataAppuntamento").style.display = "block"; tuttoValido = false; }
+  if (!tuttoValido) return;
+  document.getElementById("sendingText").innerHTML = "Controllo disponibilit\u00e0 date in corso...<br>Attendere...";
+  document.getElementById("sendingOverlay").style.display = "flex";
+  try {
+    const response = await fetch(API_URL + '?service=sat');
+    const checkData = await response.json();
+    const dateAttuali = lav === "anomalia" ? checkData.dateAnomalia : checkData.dateMontaggio;
+    if (lav !== "annullamento" && !dateAttuali.includes(dataScelta)) {
+      document.getElementById("sendingOverlay").style.display = "none";
+      document.getElementById("dateUnavailableOverlay").style.display = "flex";
+      dateDisponibiliMontaggio = checkData.dateMontaggio || [];
+      dateDisponibiliAnomalia = checkData.dateAnomalia || [];
+      aggiornaVisibilita();
+      return;
+    }
+    document.getElementById("sendingText").innerHTML = "Invio dati in corso...<br>NON CHIUDERE LA PAGINA";
+    const payload = {
+      email: document.getElementById("email").value.trim(),
+      targa: document.getElementById("targa").value.trim().toUpperCase(),
+      nomeCognome: document.getElementById("nomeCognome").value.trim(),
+      telefono: document.getElementById("telefono").value.trim(),
+      compagnia: document.getElementById("compagnia").value,
+      lavorazione: lav,
+      notecliente: note,
+      dataAppuntamento: dataScelta
+    };
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', service: 'sat', dati: payload }) });
+    const result = await res.json();
+    if (result.success) {
+      document.getElementById("formWrapper").style.display = "none";
+      document.getElementById("successOverlay").style.display = "block";
+    } else { alert("Errore del server: " + result.error); }
+  } catch (e) { alert("Errore di connessione col server. Controlla la tua rete e riprova."); }
+  finally { document.getElementById("sendingOverlay").style.display = "none"; }
+}
+<\/script>
+</body>
+</html>`;
+
+// ─────────────────────────────────────────────────────────────
+const HTML_MAN = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MODULO MANUTENZIONE</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Roboto, Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; background: #e6f0fa; font-size: 16px; }
+  #formWrapper { width: 100%; max-width: 480px; padding: 10px 20px; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); margin: 20px auto; }
+  h2 { text-align: center; font-size: 22px; margin-bottom: 10px; }
+  h4 { text-align: center; font-size: 16px; color: #555; margin: 5px 0; font-weight: normal; }
+  label { display: block; font-weight: bold; margin-top: 18px; font-size: 16px; text-align: center; }
+  input, select, textarea { width: 100%; padding: 16px 14px; margin-top: 5px; font-size: 20px; line-height: 1.4; border-radius: 8px; border: 1px solid #ccc; display: block; text-align: center; }
+  .button-group { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; justify-content: center; }
+  .button-group input[type="radio"] { display: none; }
+  .button-group label { flex: 1 1 calc(50% - 6px); min-width: 140px; padding: 16px 20px; background: #f0f0f0; border: 2px solid #ddd; border-radius: 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 18px; transition: all 0.3s ease; margin: 0; }
+  .button-group input[type="radio"]:checked + label { background: #1a73e8; color: white; border-color: #1a73e8; box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
+  .checkbox-group { margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+  .checkbox-group label { display: flex; align-items: center; gap: 8px; font-weight: 600; text-align: left; margin: 0; }
+  .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; margin: 0; flex-shrink: 0; }
+  #altroTesto { display: none; width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; text-align: center; }
+  #alertObbligatorio { background: #ffe6e6; border: 2px solid red; border-radius: 8px; padding: 12px; margin-top: 20px; color: red; font-weight: bold; font-size: 15px; text-align: center; width: 100%; }
+  #prenota { width: 100%; padding: 18px; margin-top: 20px; margin-bottom: 20px; font-size: 20px; font-weight: bold; background: #1a73e8; color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; display: block; }
+  #prenota:hover:not(:disabled) { background: #1557b0; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
+  #prenota:disabled { background: #ccc; cursor: not-allowed; }
+  #loadingOverlay, #sendingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e6f0fa; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #777; }
+  #sendingOverlay { display: none; }
+  .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #1a73e8; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  #infoRiconsegna { display: none; background: #fff3e0; border: 2px solid #ff9800; border-radius: 8px; padding: 15px; margin-top: 15px; color: #e65100; font-weight: bold; text-align: center; font-size: 16px; }
+  #successOverlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f1f8e9; z-index: 300; text-align: center; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.3); border: 4px solid #4caf50; width: 90%; max-width: 440px; }
+  #successOverlay h2 { color: #1b5e20; font-size: 28px; font-weight: 900; margin-bottom: 20px; }
+  #successOverlay p { color: #1b5e20; font-size: 20px; font-weight: 700; line-height: 1.4; }
+  #errorOverlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; z-index: 300; text-align: center; padding: 40px 30px; border-radius: 12px; border: 3px solid #f44336; color: #c62828; width: 90%; max-width: 440px; }
+</style>
+</head>
+<body onload="init()">
+  <div id="loadingOverlay"><div class="spinner"></div><p>Caricamento modulo in corso...</p></div>
+  <div id="sendingOverlay"><div class="spinner"></div><p>Invio dati in corso...<br>NON CHIUDERE LA PAGINA</p></div>
+  <div id="formWrapper" style="display:none;">
+    <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
+      <label>TIPOLOGIA CLIENTE:</label>
+      <div class="button-group">
+        <input type="radio" name="tipologiacliente" value="PRIVATO" id="tipPrivato" onchange="aggiornaAvvisiETipologia()">
+        <label for="tipPrivato">PRIVATO</label>
+        <input type="radio" name="tipologiacliente" value="ARVAL" id="tipArval" onchange="aggiornaAvvisiETipologia()">
+        <label for="tipArval">ARVAL</label>
+        <input type="radio" name="tipologiacliente" value="UNIPOLRENTAL" id="tipUnipol" onchange="aggiornaAvvisiETipologia()">
+        <label for="tipUnipol">UNIPOLRENTAL</label>
+        <input type="radio" name="tipologiacliente" value="ALTRO NOLEGGIO" id="tipAltri" onchange="aggiornaAvvisiETipologia()">
+        <label for="tipAltri">ALTRO NOLEGGIO</label>
+      </div>
+      <div id="avvisoNoleggio" style="display:none; color:red; font-size:14px; margin-top:8px; text-align:center;">
+        Nel campo nome e cognome indicare anche il nome del noleggio scritto sul libretto di circolazione
+      </div>
+      <label>TARGA AUTO:</label>
+      <input type="text" id="targa" maxlength="7" minlength="7" placeholder="Esempio: AA123BB" onchange="aggiornaStatoPrenota()" style="text-transform:uppercase;">
+      <label>KM AUTO:</label>
+      <input type="text" inputmode="numeric" placeholder="Inserire solo numeri senza punti" id="km" onchange="aggiornaStatoPrenota()">
+      <label>MARCA E MODELLO AUTO:</label>
+      <input type="text" id="marcaModello" placeholder="Esempio: Fiat Panda Benzina Manuale" onchange="aggiornaStatoPrenota()">
+      <label>NOME E COGNOME:</label>
+      <input type="text" id="nomeCognome" onchange="aggiornaStatoPrenota()">
+      <label>EMAIL:</label>
+      <input type="email" id="email" inputmode="email" onchange="aggiornaStatoPrenota()">
+      <label>CONTATTO TELEFONICO:</label>
+      <input type="text" id="telefono" inputmode="tel" onchange="aggiornaStatoPrenota()">
+      <label>LAVORAZIONE RICHIESTA:</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" name="lavorazione" value="Tagliando" onchange="aggiornaStatoPrenota()"> Tagliando e/o cambio olio</label>
+        <label><input type="checkbox" name="lavorazione" value="Spazzole" onchange="aggiornaStatoPrenota()"> Spazzole tergicristallo</label>
+        <label><input type="checkbox" id="altroCheck" onchange="aggiornaStatoPrenota()"> Altro:</label>
+        <input type="text" id="altroTesto" placeholder="Specifica qui..." oninput="aggiornaStatoPrenota()" />
+      </div>
+      <label>DATA APPUNTAMENTO:</label>
+      <select id="dataAppuntamento" onchange="aggiornaRiconsegna(); aggiornaStatoPrenota()">
+        <option value="">Seleziona...</option>
+      </select>
+      <div id="infoRiconsegna"></div>
+      <div id="alertObbligatorio">❌ Attenzione: tutti i campi sono obbligatori</div>
+      <button type="button" id="prenota" onclick="invia()" disabled>Prenota</button>
+    </form>
+  </div>
+  <div id="successOverlay">
+    <h2>✅ MODULO INVIATO</h2>
+    <p>Si ricorda di presentarsi con la mail ricevuta (controllare anche lo SPAM). Grazie.</p>
+  </div>
+  <div id="errorOverlay">❌ ERRORE NELL'INVIO<br><br>Riprova pi\u00f9 tardi.</div>
+<script>
+const API_URL = '__API_URL__';
+let dateFlotte = [], datePrivati = [], dataRiconsegnaStimata = "";
+const altroCheck = document.getElementById('altroCheck');
+const altroTesto = document.getElementById('altroTesto');
+altroCheck.addEventListener('change', () => {
+  altroTesto.style.display = altroCheck.checked ? 'block' : 'none';
+  if (!altroCheck.checked) altroTesto.value = '';
+});
+function aggiornaRiconsegna() {
+  const select = document.getElementById("dataAppuntamento");
+  const info = document.getElementById("infoRiconsegna");
+  const valore = select.value;
+  if (!valore) { info.style.display = "none"; dataRiconsegnaStimata = ""; return; }
+  const mesi = {"gennaio":0,"febbraio":1,"marzo":2,"aprile":3,"maggio":4,"giugno":5,"luglio":6,"agosto":7,"settembre":8,"ottobre":9,"novembre":10,"dicembre":11};
+  const parti = valore.toLowerCase().split(" ");
+  const giorno = parseInt(parti[1]);
+  const mese = mesi[parti[2]];
+  const orario = parti[3].split(":");
+  let data = new Date();
+  data.setDate(giorno);
+  data.setMonth(mese);
+  data.setHours(parseInt(orario[0]), parseInt(orario[1]), 0, 0);
+  let minutiDaAggiungere = 451;
+  while (minutiDaAggiungere > 0) {
+    data.setMinutes(data.getMinutes() + 1);
+    let h = data.getHours();
+    let m = data.getMinutes();
+    let oraDecimale = h + (m / 60);
+    if (oraDecimale > 12.5 && oraDecimale < 14) { data.setHours(14, 0, 0, 0); }
+    if (oraDecimale > 17.99 || oraDecimale < 8) {
+      data.setDate(data.getDate() + 1);
+      data.setHours(8, 0, 0, 0);
+      if (data.getDay() === 0) data.setDate(data.getDate() + 1);
+    }
+    minutiDaAggiungere--;
+  }
+  const giorniSett = ["domenica", "luned\u00ec", "marted\u00ec", "mercoled\u00ec", "gioved\u00ec", "venerd\u00ec", "sabato"];
+  const nomiMesi = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+  const oraFmt = data.getHours().toString().padStart(2, '0') + ":" + data.getMinutes().toString().padStart(2, '0');
+  dataRiconsegnaStimata = giorniSett[data.getDay()] + " " + data.getDate() + " " + nomiMesi[data.getMonth()] + " ore " + oraFmt;
+  info.innerHTML = "🚗 Riconsegna veicolo stimata:<br>" + dataRiconsegnaStimata.toUpperCase() + "<br>Avviseremo comunque non appena il veicolo sar\u00e0 pronto tramite un messaggio WhatsApp!";
+  info.style.display = "block";
+}
+async function init(){
+  try {
+    const response = await fetch(API_URL + '?service=man');
+    const data = await response.json();
+    dateFlotte = data.dateFlotte || [];
+    datePrivati = data.datePrivati || [];
+    popolaDateDropdown();
+    document.getElementById("loadingOverlay").style.display = "none";
+    document.getElementById("formWrapper").style.display = "block";
+  } catch(error) { alert('Errore caricamento dati.'); }
+}
+function popolaDateDropdown() {
+  const select = document.getElementById("dataAppuntamento");
+  const tipologia = document.querySelector('input[name="tipologiacliente"]:checked')?.value;
+  select.innerHTML = '<option value="">Seleziona...</option>';
+  let dateToShow = (tipologia === 'PRIVATO') ? unisciEOrdinaDate(dateFlotte, datePrivati) : ordinaDate(dateFlotte);
+  dateToShow.forEach(d => { const opt = document.createElement("option"); opt.value = d; opt.textContent = d; select.appendChild(opt); });
+}
+function parseDateString(str) {
+  const mesi = {"gennaio":0,"febbraio":1,"marzo":2,"aprile":3,"maggio":4,"giugno":5,"luglio":6,"agosto":7,"settembre":8,"ottobre":9,"novembre":10,"dicembre":11};
+  const parts = str.toLowerCase().split(" ");
+  const day = parseInt(parts[1]), month = mesi[parts[2]], time = parts[3].split(":");
+  const now = new Date();
+  let year = now.getFullYear();
+  if (month < now.getMonth() || (month === now.getMonth() && day < now.getDate())) year++;
+  return new Date(year, month, day, parseInt(time[0]), parseInt(time[1]));
+}
+function ordinaDate(arr) { return arr.map(d => ({t: d, d: parseDateString(d)})).sort((a,b) => a.d - b.d).map(i => i.t); }
+function unisciEOrdinaDate(a, b) { return ordinaDate([...a, ...b]); }
+function aggiornaAvvisiETipologia() {
+  document.getElementById('avvisoNoleggio').style.display = (document.querySelector('input[name="tipologiacliente"]:checked')?.value === 'ALTRO NOLEGGIO') ? 'block' : 'none';
+  popolaDateDropdown();
+  aggiornaStatoPrenota();
+}
+function aggiornaStatoPrenota(){
+  const vf = (id) => document.getElementById(id).value.trim();
+  const targaOk = vf("targa").length === 7;
+  const lavOk = document.querySelectorAll('input[name="lavorazione"]:checked').length > 0 || (altroCheck.checked && vf("altroTesto") !== "");
+  const campiOk = targaOk && vf("dataAppuntamento") && vf("telefono") && vf("email") && vf("nomeCognome") && vf("km") && vf("marcaModello") && lavOk && document.querySelector('input[name="tipologiacliente"]:checked');
+  document.getElementById("prenota").disabled = !campiOk;
+  document.getElementById("alertObbligatorio").style.display = campiOk ? "none" : "block";
+}
+async function invia(){
+  document.getElementById("sendingOverlay").style.display = "flex";
+  const lavs = [];
+  document.querySelectorAll('input[name="lavorazione"]:checked').forEach(cb => lavs.push(cb.value));
+  if (altroCheck.checked) lavs.push("Altro: " + altroTesto.value);
+  const dati = {
+    tipologiacliente: document.querySelector('input[name="tipologiacliente"]:checked').value,
+    targa: vf("targa").toUpperCase(),
+    km: vf("km"),
+    marcaModello: vf("marcaModello"),
+    nomeCognome: vf("nomeCognome"),
+    email: vf("email"),
+    telefono: vf("telefono"),
+    lavorazione: lavs.join(", "),
+    dataAppuntamento: vf("dataAppuntamento"),
+    dataRiconsegna: dataRiconsegnaStimata
+  };
+  try {
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', service: 'man', dati: dati }) });
+    const result = await res.json();
+    document.getElementById("sendingOverlay").style.display = "none";
+    if (result.success) { document.getElementById("formWrapper").style.display = "none"; document.getElementById("successOverlay").style.display = "block"; }
+    else { alert("Errore salvataggio."); }
+  } catch(e) { document.getElementById("sendingOverlay").style.display = "none"; alert("Errore invio."); }
+}
+function vf(id) { return document.getElementById(id).value.trim(); }
+<\/script>
+</body>
+</html>`;
+
+ // ─────────────────────────────────────────────────────────────
+const HTML_REV = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MODULO REVISIONE</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Roboto, Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; background: #e6f0fa; font-size: 16px; }
+  #formWrapper { width: 100%; max-width: 480px; padding: 10px 20px; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); margin: 20px auto; }
+  h2 { text-align: center; font-size: 22px; margin-bottom: 10px; }
+  h4 { text-align: center; font-size: 16px; color: #555; margin: 5px 0; font-weight: normal; }
+  label { display: block; font-weight: bold; margin-top: 18px; font-size: 16px; text-align: center; }
+  input, select, textarea { width: 100%; padding: 16px 14px; margin-top: 5px; font-size: 20px; line-height: 1.4; border-radius: 8px; border: 1px solid #ccc; display: block; text-align: center; }
+  .button-group { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; justify-content: center; }
+  .button-group input[type="radio"] { display: none; }
+  .button-group label { flex: 1 1 calc(50% - 6px); min-width: 140px; padding: 16px 20px; background: #f0f0f0; border: 2px solid #ddd; border-radius: 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 18px; transition: all 0.3s ease; margin: 0; }
+  .button-group input[type="radio"]:checked + label { background: #1a73e8; color: white; border-color: #1a73e8; box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
+  .lavorazione-fissa { background: #e8f5e9; border: 2px solid #4caf50; border-radius: 10px; padding: 16px; margin-top: 10px; text-align: center; font-size: 20px; font-weight: bold; color: #2e7d32; }
+  #alertObbligatorio { background: #ffe6e6; border: 2px solid red; border-radius: 8px; padding: 12px; margin-top: 20px; color: red; font-weight: bold; font-size: 15px; text-align: center; width: 100%; }
+  #prenota { width: 100%; padding: 18px; margin-top: 20px; margin-bottom: 20px; font-size: 20px; font-weight: bold; background: #1a73e8; color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; display: block; }
+  #prenota:hover:not(:disabled) { background: #1557b0; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
+  #prenota:disabled { background: #ccc; cursor: not-allowed; }
+  #loadingOverlay, #sendingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e6f0fa; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #777; }
+  #sendingOverlay { display: none; }
+  .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #1a73e8; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  #infoRiconsegna { display: none; background: #fff3e0; border: 2px solid #ff9800; border-radius: 8px; padding: 15px; margin-top: 15px; color: #e65100; font-weight: bold; text-align: center; font-size: 16px; }
+  #successOverlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f1f8e9; z-index: 300; text-align: center; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.3); border: 4px solid #4caf50; width: 90%; max-width: 440px; }
+  #successOverlay h2 { color: #1b5e20; font-size: 28px; font-weight: 900; margin-bottom: 20px; }
+  #successOverlay p { color: #1b5e20; font-size: 20px; font-weight: 700; line-height: 1.4; }
+  #errorOverlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; z-index: 300; text-align: center; padding: 40px 30px; border-radius: 12px; border: 3px solid #f44336; color: #c62828; width: 90%; max-width: 440px; }
+</style>
+</head>
+<body onload="init()">
+  <div id="loadingOverlay"><div class="spinner"></div><p>Caricamento modulo in corso...</p></div>
+  <div id="sendingOverlay"><div class="spinner"></div><p>Invio dati in corso...<br>NON CHIUDERE LA PAGINA</p></div>
+  <div id="formWrapper" style="display:none;">
+    
+    <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
+
+      <label>TIPOLOGIA CLIENTE:</label>
+      <div class="button-group">
+        <input type="radio" name="tipologiacliente" value="PRIVATO" id="tipPrivato" onchange="aggiornaAvvisiETipologia()">
+        <label for="tipPrivato">PRIVATO</label>
+        <input type="radio" name="tipologiacliente" value="ARVAL" id="tipArval" onchange="aggiornaAvvisiETipologia()">
+        <label for="tipArval">ARVAL</label>
+        <input type="radio" name="tipologiacliente" value="UNIPOLRENTAL" id="tipUnipol" onchange="aggiornaAvvisiETipologia()">
+        <label for="tipUnipol">UNIPOLRENTAL</label>
+        <input type="radio" name="tipologiacliente" value="ALTRO NOLEGGIO" id="tipAltri" onchange="aggiornaAvvisiETipologia()">
+        <label for="tipAltri">ALTRO NOLEGGIO</label>
+      </div>
+      <div id="avvisoNoleggio" style="display:none; color:red; font-size:14px; margin-top:8px; text-align:center;">
+        Nel campo nome e cognome indicare anche il nome del noleggio scritto sul libretto di circolazione
+      </div>
+
+      <label>TARGA AUTO:</label>
+      <input type="text" id="targa" maxlength="7" minlength="7" placeholder="Esempio: AA123BB" onchange="aggiornaStatoPrenota()" style="text-transform:uppercase;">
+
+      <label>KM AUTO:</label>
+      <input type="text" inputmode="numeric" placeholder="Inserire solo numeri senza punti" id="km" onchange="aggiornaStatoPrenota()">
+
+      <label>MARCA E MODELLO AUTO:</label>
+      <input type="text" id="marcaModello" placeholder="Esempio: Fiat Panda Benzina Manuale" onchange="aggiornaStatoPrenota()">
+
+      <label>NOME E COGNOME:</label>
+      <input type="text" id="nomeCognome" onchange="aggiornaStatoPrenota()">
+
+      <label>EMAIL:</label>
+      <input type="email" id="email" inputmode="email" onchange="aggiornaStatoPrenota()">
+
+      <label>CONTATTO TELEFONICO:</label>
+      <input type="text" id="telefono" inputmode="tel" onchange="aggiornaStatoPrenota()">
+
+      <label>LAVORAZIONE RICHIESTA:</label>
+      <div class="lavorazione-fissa">✅ REVISIONE MINISTERIALE</div>
+
+      <label>DATA APPUNTAMENTO:</label>
+      <select id="dataAppuntamento" onchange="aggiornaRiconsegna(); aggiornaStatoPrenota()">
+        <option value="">Seleziona...</option>
+      </select>
+
+      <div id="infoRiconsegna"></div>
+
+      <div id="alertObbligatorio">❌ Attenzione: tutti i campi sono obbligatori</div>
+      <button type="button" id="prenota" onclick="invia()" disabled>Prenota</button>
+    </form>
+  </div>
+  <div id="successOverlay">
+    <h2>✅ MODULO INVIATO</h2>
+    <p>Si ricorda di presentarsi con la mail ricevuta (controllare anche lo SPAM). Grazie.</p>
+  </div>
+  <div id="errorOverlay">❌ ERRORE NELL'INVIO<br><br>Riprova più tardi.</div>
+
+<script>
+const API_URL = '__API_URL__';
+let dateRevisioni = [], dataRiconsegnaStimata = "";
+
+async function init(){
+  try {
+    const response = await fetch(API_URL + '?service=rev');
+    const data = await response.json();
+    dateRevisioni = data.dateRevisioni || [];
+    popolaDateDropdown();
+    document.getElementById("loadingOverlay").style.display = "none";
+    document.getElementById("formWrapper").style.display = "block";
+  } catch(error) { alert('Errore caricamento dati.'); }
+}
+
+function popolaDateDropdown() {
+  const select = document.getElementById("dataAppuntamento");
+  select.innerHTML = '<option value="">Seleziona...</option>';
+  ordinaDate(dateRevisioni).forEach(d => {
+    const opt = document.createElement("option"); opt.value = d; opt.textContent = d; select.appendChild(opt);
+  });
+}
+
+function parseDateString(str) {
+  const mesi = {"gennaio":0,"febbraio":1,"marzo":2,"aprile":3,"maggio":4,"giugno":5,"luglio":6,"agosto":7,"settembre":8,"ottobre":9,"novembre":10,"dicembre":11};
+  const parts = str.toLowerCase().split(" ");
+  const day = parseInt(parts[1]), month = mesi[parts[2]], time = parts[3].split(":");
+  const now = new Date();
+  let year = now.getFullYear();
+  if (month < now.getMonth() || (month === now.getMonth() && day < now.getDate())) year++;
+  return new Date(year, month, day, parseInt(time[0]), parseInt(time[1]));
+}
+
+function ordinaDate(arr) {
+  return arr.map(d => ({t: d, d: parseDateString(d)})).sort((a,b) => a.d - b.d).map(i => i.t);
+}
+
+function aggiornaRiconsegna() {
+  const select = document.getElementById("dataAppuntamento");
+  const info = document.getElementById("infoRiconsegna");
+  const valore = select.value;
+  if (!valore) { info.style.display = "none"; dataRiconsegnaStimata = ""; return; }
+  const mesi = {"gennaio":0,"febbraio":1,"marzo":2,"aprile":3,"maggio":4,"giugno":5,"luglio":6,"agosto":7,"settembre":8,"ottobre":9,"novembre":10,"dicembre":11};
+  const parti = valore.toLowerCase().split(" ");
+  const giorno = parseInt(parti[1]);
+  const mese = mesi[parti[2]];
+  const orario = parti[3].split(":");
+  let data = new Date();
+  data.setDate(giorno);
+  data.setMonth(mese);
+  data.setHours(parseInt(orario[0]), parseInt(orario[1]), 0, 0);
+  let minutiDaAggiungere = 180;
+  while (minutiDaAggiungere > 0) {
+    data.setMinutes(data.getMinutes() + 1);
+    let h = data.getHours();
+    let m = data.getMinutes();
+    let oraDecimale = h + (m / 60);
+    if (oraDecimale > 12.49 && oraDecimale < 14) { data.setHours(14, 0, 0, 0); }
+    if (oraDecimale > 18.49 || oraDecimale < 8) {
+      data.setDate(data.getDate() + 1);
+      data.setHours(8, 0, 0, 0);
+      if (data.getDay() === 0) data.setDate(data.getDate() + 1);
+    }
+    minutiDaAggiungere--;
+  }
+  const giorniSett = ["domenica", "luned\u00ec", "marted\u00ec", "mercoled\u00ec", "gioved\u00ec", "venerd\u00ec", "sabato"];
+  const nomiMesi = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+  const oraFmt = data.getHours().toString().padStart(2, '0') + ":" + data.getMinutes().toString().padStart(2, '0');
+  dataRiconsegnaStimata = giorniSett[data.getDay()] + " " + data.getDate() + " " + nomiMesi[data.getMonth()] + " ore " + oraFmt;
+  info.innerHTML = "🚗 Riconsegna veicolo stimata:<br>" + dataRiconsegnaStimata.toUpperCase() + "<br>Avviseremo comunque non appena il veicolo sar\u00e0 pronto tramite un messaggio WhatsApp!";
+  info.style.display = "block";
+}
+
+function aggiornaAvvisiETipologia() {
+  document.getElementById('avvisoNoleggio').style.display =
+    (document.querySelector('input[name="tipologiacliente"]:checked')?.value === 'ALTRO NOLEGGIO') ? 'block' : 'none';
+  aggiornaStatoPrenota();
+}
+
+function aggiornaStatoPrenota(){
+  const v = (id) => document.getElementById(id).value.trim();
+  const targaOk  = v("targa").length === 7;
+  const campiOk  = targaOk && v("dataAppuntamento") && v("telefono") && v("email") && v("nomeCognome") && v("km") && v("marcaModello") && document.querySelector('input[name="tipologiacliente"]:checked');
+  document.getElementById("prenota").disabled = !campiOk;
+  document.getElementById("alertObbligatorio").style.display = campiOk ? "none" : "block";
+}
+
+async function invia(){
+  document.getElementById("sendingOverlay").style.display = "flex";
+  const dati = {
+    tipologiacliente: document.querySelector('input[name="tipologiacliente"]:checked').value,
+    targa:            document.getElementById("targa").value.trim().toUpperCase(),
+    km:               document.getElementById("km").value.trim(),
+    marcaModello:     document.getElementById("marcaModello").value.trim(),
+    nomeCognome:      document.getElementById("nomeCognome").value.trim(),
+    email:            document.getElementById("email").value.trim(),
+    telefono:         document.getElementById("telefono").value.trim(),
+    lavorazione:      "REVISIONE",
+    dataAppuntamento: document.getElementById("dataAppuntamento").value.trim(),
+    dataRiconsegna:   dataRiconsegnaStimata
+  };
+  try {
+    const res    = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', service: 'rev', dati: dati }) });
+    const result = await res.json();
+    document.getElementById("sendingOverlay").style.display = "none";
+    if (result.success) {
+      document.getElementById("formWrapper").style.display = "none";
+      document.getElementById("successOverlay").style.display = "block";
+    } else { alert("Errore salvataggio."); }
+  } catch(e) {
+    document.getElementById("sendingOverlay").style.display = "none";
+    alert("Errore invio.");
+  }
+}
+<\/script>
+</body>
+</html>`;
+
+// ─────────────────────────────────────────────────────────────
+const HTML_PNM = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MODULO PNEUMATICI</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Roboto, Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; background: #e6f0fa; font-size: 16px; }
+  #formWrapper { width: 100%; max-width: 480px; padding: 10px 20px; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); margin: 20px auto; }
+  h2 { text-align: center; font-size: 22px; margin-bottom: 10px; }
+  h4 { text-align: center; font-size: 16px; color: #555; margin: 5px 0; font-weight: normal; }
+  label { display: block; font-weight: bold; margin-top: 18px; font-size: 16px; text-align: center; }
+  input, select, textarea { width: 100%; padding: 16px 14px; margin-top: 5px; font-size: 20px; line-height: 1.4; border-radius: 8px; border: 1px solid #ccc; display: block; text-align: center; }
+  .button-group { display: flex; gap: 12px; margin-top: 10px; justify-content: center; }
+  .button-group input[type="radio"] { display: none; }
+  .button-group label { flex: 1; padding: 16px 20px; background: #f0f0f0; border: 2px solid #ddd; border-radius: 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 18px; transition: all 0.3s ease; margin: 0; }
+  .button-group input[type="radio"]:checked + label { background: #1a73e8; color: white; border-color: #1a73e8; box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
+  .button-group label:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+  .radio-group { display: flex; gap: 12px; margin-top: 10px; justify-content: center; }
+  .radio-group input[type="radio"] { display: none; }
+  .radio-group label { flex: 1; padding: 14px 20px; background: #f0f0f0; border: 2px solid #ddd; border-radius: 8px; text-align: center; cursor: pointer; font-weight: 600; font-size: 17px; transition: all 0.3s ease; margin: 0; }
+  .radio-group input[type="radio"]:checked + label { background: #1a73e8; color: white; border-color: #1a73e8; }
+  .radio-group label:hover { transform: scale(1.02); }
+  button { background-color: #1a73e8; color: white; border: none; cursor: pointer; margin-top: 15px; font-size: 20px; padding: 18px; border-radius: 8px; width: 100%; font-weight: bold; transition: all 0.3s ease; }
+  button:hover:not(:disabled) { background: #1557b0; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
+  button:disabled { background-color: #ccc; cursor: not-allowed; }
+  .hidden { display: none; }
+  #targaMsg { font-weight: bold; margin-top: 5px; color: red; font-size: 16px; text-align: center; }
+  #alertObbligatorio { background: #ffe6e6; border: 2px solid red; border-radius: 8px; padding: 12px; margin-top: 20px; color: red; font-weight: bold; font-size: 15px; text-align: center; width: 100%; }
+ #successOverlay, #errorOverlay { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:300; text-align:center; padding:40px 30px; border-radius:12px; box-shadow:0 4px 25px rgba(0,0,0,0.3); width:90%; max-width:440px; }
+#successOverlay { background:#f1f8e9; border:4px solid #4caf50; color:#1b5e20; }
+#errorOverlay { background:white; border:3px solid #f44336; color:#c62828; }
+  #successOverlay { color: #2e7d32; }
+  #errorOverlay { color: #c62828; }
+  #successOverlay > div, #errorOverlay > div { background: white; padding: 40px 30px; border-radius: 12px; max-width: 90%; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+  #successOverlay > div { border: 3px solid #4caf50; }
+  #errorOverlay > div { border: 3px solid #f44336; }
+  #loadingOverlay, #sendingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e6f0fa; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+  #sendingOverlay { display: none; }
+  .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #1a73e8; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  #loadingOverlay p, #sendingOverlay p { margin-top: 20px; font-size: 18px; color: #555; font-weight: bold; text-align: center; padding: 0 20px; }
+  #infoRiconsegna { background: #fff3cd; border: 2px solid #ffa500; padding: 15px; margin: 15px 0; border-radius: 8px; font-weight: bold; color: #d45500; text-align: center; display: none; font-size: 16px; }
+</style>
+</head>
+<body onload="init()">
+  <div id="loadingOverlay"><div class="spinner"></div><p>Caricamento modulo in corso...</p></div>
+  <div id="sendingOverlay"><div class="spinner"></div><p>Invio dati in corso...<br>NON CHIUDERE LA PAGINA<br>Attendere...</p></div>
+  <div id="formWrapper" style="display:none;">
+    
+     <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
+      <label>TIPOLOGIA CLIENTE:</label>
+      <div class="button-group">
+        <input type="radio" name="tipologiacliente" value="PRIVATO" id="tipPrivato" onchange="aggiornaVisibilita()">
+        <label for="tipPrivato">PRIVATO</label>
+        <input type="radio" name="tipologiacliente" value="NOLEGGI" id="tipNoleggi" onchange="aggiornaVisibilita()">
+        <label for="tipNoleggi">NOLEGGI<br><small style="font-size:13px;">(Arval, UnipolRental, Leasys etc.)</small></label>
+      </div>
+      <div id="msgNoleggi" style="display:none; color:red; font-size:14px; margin-top:8px;text-align:center">
+        ⚠️ Nel campo nome e cognome inserire anche il nome della societ\u00e0 di noleggio scritto sul libretto di circolazione
+      </div>
+      <div id="depositoContainer" class="hidden">
+        <label>ABBIAMO GLI PNEUMATICI IN DEPOSITO NELLA NOSTRA SEDE?</label>
+        <div class="radio-group">
+          <input type="radio" name="dep" value="SI" id="depSi" onchange="aggiornaCampi()">
+          <label for="depSi">SI</label>
+          <input type="radio" name="dep" value="NO" id="depNo" onchange="aggiornaCampi()">
+          <label for="depNo">NO</label>
+        </div>
+        <div id="msgDepNo" style="display:none; color:red; font-size:14px; margin-top:8px;text-align:center">
+          ⚠️ Si ricorda di portare gli pneumatici il giorno dell'appuntamento
+        </div>
+      </div>
+      <div id="campiAuto" class="hidden">
+        <label>TARGA AUTO:</label>
+        <input type="text" id="targa" maxlength="7" oninput="checkTargaInput(this)">
+        <div id="targaMsg">✏️ Inserisci la targa (7 caratteri)</div>
+        <label>MARCA E MODELLO AUTO:</label>
+        <input type="text" id="marcaModello">
+      </div>
+      <div id="campiContatti" class="hidden">
+        <label>NOME E COGNOME:</label>
+        <input type="text" id="nomeCognome" onchange="aggiornaStatoPrenota()">
+        <label>EMAIL:</label>
+        <input type="email" id="email" inputmode="email" autocomplete="email" onchange="aggiornaStatoPrenota()">
+        <label>CONTATTO TELEFONICO:</label>
+        <input type="text" id="telefono" inputmode="tel" autocomplete="tel" onchange="aggiornaStatoPrenota()">
+        <label>DATA APPUNTAMENTO:</label>
+        <select id="dataAppuntamento" onchange="aggiornaRiconsegna(); aggiornaStatoPrenota()">
+          <option value="">Seleziona...</option>
+        </select>
+        <div id="infoRiconsegna"></div>
+      </div>
+      <div style="background:#ffe6e6; border:2px solid red; border-radius:8px; padding:12px; margin-top:15px; color:red; font-weight:bold; font-size:15px; text-align:center;">
+        ⏰ Si raccomanda di rispettare l'orario prescelto. Con un ritardo superiore ai 10 minuti l'appuntamento verr\u00e0 considerato annullato.
+      </div>
+      <div id="alertObbligatorio">❌ Attenzione: tutti i campi sono obbligatori</div>
+      <button type="button" id="prenota" onclick="invia()" disabled>Prenota</button>
+    </form>
+  </div>
+  <div id="successOverlay">
+  <h2 style="font-size:28px; font-weight:900; margin-bottom:20px;">✅ MODULO INVIATO CORRETTAMENTE</h2>
+  <p style="font-size:18px; font-weight:700; line-height:1.4;">Si ricorda che è obbligatorio presentarsi in officina il giorno dell'appuntamento con la mail appena ricevuta (controllare anche lo SPAM).<br><br>Grazie.</p>
+</div>
+  <div id="errorOverlay">
+    <div>❌ ERRORE NELL'INVIO DEI DATI<br><br>Si \u00e8 verificato un problema durante l'invio della prenotazione.<br><br>Ti preghiamo di riprovare.</div>
+  </div>
+<script>
+const API_URL = '__API_URL__';
+let dbTarghe = {}, dateDisponibili = [], targaValida = false, targaQuantita = 0;
+async function init(){
+  try {
+    const response = await fetch(API_URL + '?service=pnm');
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    dbTarghe = data.database || {};
+    const date1ora = data.date && data.date["1h"] ? data.date["1h"] : [];
+    const date3ore = data.date && data.date["3h"] ? data.date["3h"] : [];
+    dateDisponibili = unisciEOrdinaDate(date1ora, date3ore);
+    popolaDateDropdown();
+    document.getElementById("loadingOverlay").style.display = "none";
+    document.getElementById("formWrapper").style.display = "block";
+  } catch(error) {
+    alert('Errore nel caricamento dei dati. Riprova pi\u00f9 tardi.');
+  }
+  document.getElementById("depositoContainer").classList.add("hidden");
+  document.getElementById("campiAuto").classList.add("hidden");
+  document.getElementById("campiContatti").classList.add("hidden");
+  document.getElementById("msgDepNo").style.display = "none";
+  aggiornaStatoPrenota();
+}
+function unisciEOrdinaDate(date1ora, date3ore) {
+  const months = {"gennaio":0,"febbraio":1,"marzo":2,"aprile":3,"maggio":4,"giugno":5,"luglio":6,"agosto":7,"settembre":8,"ottobre":9,"novembre":10,"dicembre":11};
+  function parseDateString(str) {
+    if (!str) return null;
+    const parts = str.toLowerCase().split(" ");
+    const day = parseInt(parts[1]);
+    const month = months[parts[2]];
+    const [hours, minutes] = parts[3].split(":").map(Number);
+    const now = new Date();
+    let year = now.getFullYear();
+    if (month < now.getMonth() || (month === now.getMonth() && day < now.getDate())) year++;
+    return new Date(year, month, day, hours, minutes);
+  }
+  const allDatesWithText = [];
+  date1ora.forEach(d => { const dateObj = parseDateString(d); if (dateObj) allDatesWithText.push({ date: dateObj, text: "1 ORA fermo auto: " + d }); });
+  date3ore.forEach(d => { const dateObj = parseDateString(d); if (dateObj) allDatesWithText.push({ date: dateObj, text: "3 ORE fermo auto: " + d }); });
+  allDatesWithText.sort((a, b) => a.date - b.date);
+  return allDatesWithText.map(item => item.text);
+}
+function popolaDateDropdown() {
+  const select = document.getElementById("dataAppuntamento");
+  select.innerHTML = '<option value="">Seleziona...</option>';
+  dateDisponibili.forEach(d => { const option = document.createElement("option"); option.value = d; option.textContent = d; select.appendChild(option); });
+}
+function aggiornaVisibilita(){
+  const cliente = document.querySelector('input[name="tipologiacliente"]:checked')?.value;
+  if(cliente === "PRIVATO"){
+    document.getElementById("depositoContainer").classList.remove("hidden");
+    document.getElementById("campiAuto").classList.add("hidden");
+    document.getElementById("campiContatti").classList.add("hidden");
+    document.getElementById("msgNoleggi").style.display = "none";
+  } else if(cliente === "NOLEGGI") {
+    document.getElementById("depositoContainer").classList.add("hidden");
+    document.getElementById("campiAuto").classList.remove("hidden");
+    document.getElementById("campiContatti").classList.remove("hidden");
+    document.getElementById("msgNoleggi").style.display = "block";
+  }
+  document.querySelectorAll('input[name="dep"]').forEach(el => el.checked = false);
+  document.getElementById("msgDepNo").style.display = "none";
+  targaValida = false;
+  document.getElementById("targaMsg").innerHTML = "✏️ Inserisci la targa (7 caratteri)";
+  aggiornaStatoPrenota();
+}
+function aggiornaCampi(){
+  const dep = document.querySelector('input[name="dep"]:checked')?.value;
+  if(dep === "SI" || dep === "NO"){
+    document.getElementById("campiAuto").classList.remove("hidden");
+    document.getElementById("campiContatti").classList.remove("hidden");
+  } else {
+    document.getElementById("campiAuto").classList.add("hidden");
+    document.getElementById("campiContatti").classList.add("hidden");
+  }
+  document.getElementById("msgDepNo").style.display = dep === "NO" ? "block" : "none";
+  targaValida = false;
+  aggiornaStatoPrenota();
+}
+function checkTargaInput(input) {
+  input = input || document.getElementById("targa");
+  const t = input.value.trim().toUpperCase();
+  const marcaInput = document.getElementById("marcaModello");
+  const msg = document.getElementById("targaMsg");
+  const cliente = document.querySelector('input[name="tipologiacliente"]:checked')?.value;
+  const dep = document.querySelector('input[name="dep"]:checked')?.value;
+  const manual = (cliente === "PRIVATO" && dep === "NO");
+  if (manual) {
+    if (t.length === 7) { targaValida = true; input.style.borderColor = "green"; msg.innerHTML = "✅ Targa valida"; }
+    else { targaValida = false; input.style.borderColor = ""; msg.innerHTML = "✏️ Inserisci la targa (7 caratteri)"; }
+  } else {
+    if (t.length !== 7) { targaValida = false; input.style.borderColor = ""; msg.innerHTML = "✏️ Inserisci la targa (7 caratteri)"; }
+    else {
+      if (dbTarghe && dbTarghe[t]) {
+        let depohtml = dbTarghe[t].depo || "nd";
+        targaQuantita = dbTarghe[t].quantita || 0;
+        marcaInput.value = dbTarghe[t].modello || "";
+        input.style.borderColor = "green";
+        if (targaQuantita >= 4) { msg.innerHTML = "✅ Targa valida. Ci sono " + targaQuantita + " pneumatici in deposito (" + depohtml +")"; targaValida = true; }
+        else { msg.innerHTML = "⚠️ Targa valida. Ci sono solo " + targaQuantita + " pneumatici in deposito. \u00c8 necessario passare in officina per prendere appuntamento (" + depohtml +")"; targaValida = false; }
+      } else { targaValida = false; input.style.borderColor = "red"; msg.innerHTML = "❌ Targa non trovata in deposito. \u00c8 necessario passare in officina per prendere appuntamento."; }
+    }
+  }
+  aggiornaStatoPrenota();
+}
+function aggiornaStatoPrenota(){
+  const btn = document.getElementById("prenota");
+  const targaOk = targaValida;
+  const dataOk = document.getElementById("dataAppuntamento").value.trim() !== "";
+  const telOk = document.getElementById("telefono").value.trim() !== "";
+  const emailOk = document.getElementById("email").value.trim() !== "";
+  btn.disabled = !(targaOk && dataOk && telOk && emailOk);
+  document.getElementById("alertObbligatorio").style.display = (targaOk && dataOk && telOk && emailOk) ? "none" : "block";
+}
+async function invia(){
+  const btn = document.getElementById("prenota");
+  btn.disabled = true;
+  document.getElementById("sendingOverlay").style.display = "flex";
+  const dati = {
+    tipologiacliente: document.querySelector('input[name="tipologiacliente"]:checked')?.value || "",
+    dep: document.querySelector('input[name="dep"]:checked')?.value || "",
+    targa: document.getElementById("targa").value.trim().toUpperCase(),
+    marcaModello: document.getElementById("marcaModello").value.trim(),
+    nomeCognome: document.getElementById("nomeCognome").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    telefono: document.getElementById("telefono").value.trim(),
+    dataAppuntamento: document.getElementById("dataAppuntamento").value
+  };
+  try {
+    const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', service: 'pnm', dati: dati }) });
+    const result = await response.json();
+    document.getElementById("sendingOverlay").style.display = "none";
+    if (result.success) {
+      document.getElementById("formWrapper").style.display = "none";
+      const overlay = document.getElementById("successOverlay");
+      overlay.style.display = "flex";
+      overlay.scrollIntoView({behavior:"smooth", block:"center"});
+    } else {
+      document.getElementById("formWrapper").style.display = "none";
+      const errorOverlay = document.getElementById("errorOverlay");
+      errorOverlay.style.display = "flex";
+      errorOverlay.scrollIntoView({behavior:"smooth", block:"center"});
+    }
+  } catch(error) {
+    document.getElementById("sendingOverlay").style.display = "none";
+    document.getElementById("formWrapper").style.display = "none";
+    const errorOverlay = document.getElementById("errorOverlay");
+    errorOverlay.style.display = "flex";
+    errorOverlay.scrollIntoView({behavior:"smooth", block:"center"});
+  }
+}
+function aggiornaRiconsegna() {
+  const select = document.getElementById("dataAppuntamento");
+  const info = document.getElementById("infoRiconsegna");
+  const valore = select.value;
+  if (!valore) { info.style.display = "none"; return; }
+  let oreDaAggiungere = 0;
+  if (valore.includes("1 ORA")) oreDaAggiungere = 1;
+  else if (valore.includes("3 ORE")) oreDaAggiungere = 3;
+  const matchOra = valore.match(/(\\d{2}):(\\d{2})/);
+  if (matchOra) {
+    let ore = parseInt(matchOra[1]);
+    let minuti = parseInt(matchOra[2]);
+    ore += oreDaAggiungere;
+    const nuovaOraFmt = ore.toString().padStart(2, '0') + ":" + minuti.toString().padStart(2, '0');
+    let dataPulita = valore.split("fermo auto: ")[1];
+    let riconsegnaTesto = dataPulita.replace(/(\\d{2}):(\\d{2})/, nuovaOraFmt);
+    info.innerHTML = "Data di riconsegna del veicolo stimata:<br>" + riconsegnaTesto;
+    info.style.display = "block";
+  }
+}
+<\/script>
+</body>
+</html>`;
+
+// ═══════════════════════════════════════════════════════════════
+// LOGICA LANDING PAGE
+// ═══════════════════════════════════════════════════════════════
+
+const SERVICE_TITLES = {
+  sat: '📡 Localizzatori Satellitari',
+  man: '🔧 Manutenzione Auto (Tagliando, cambio olio)',
+  pnm: '🛞 Cambio Gomme Stagionali',
+  rev: '📋 Revisione Ministeriale'
+};
+
+let framesLoaded = false;
+
+function precaricaFrames() {
+  if (framesLoaded) return;
+  // Inietta l'URL unificato in tutti e tre i moduli (sostituisce il placeholder __API_URL__)
+  const injectUrl = (html) => html.replaceAll('__API_URL__', API_URL_UNIFICATO);
+  document.getElementById('frame-sat').srcdoc = injectUrl(HTML_SAT);
+  document.getElementById('frame-man').srcdoc = injectUrl(HTML_MAN);
+  document.getElementById('frame-pnm').srcdoc = injectUrl(HTML_PNM);
+  document.getElementById('frame-rev').srcdoc = injectUrl(HTML_REV);
+  framesLoaded = true;
+}
+
+function apriServizio(servizio) {
+  precaricaFrames();
+
+  // Nascondi landing
+  const landing = document.getElementById('landing');
+  landing.classList.add('fade-out');
+
+  setTimeout(() => {
+    landing.style.display = 'none';
+
+    // Nascondi tutti i frame, mostra quello giusto
+    document.querySelectorAll('.service-frame').forEach(f => f.classList.remove('active'));
+    const activeFrame = document.getElementById('frame-' + servizio);
+    activeFrame.classList.add('active');
+
+    // Aggiorna titolo topbar
+    document.getElementById('topbar-title').textContent = SERVICE_TITLES[servizio] || 'Prenotazione';
+
+    // Mostra frame-view
+    const fv = document.getElementById('frame-view');
+    fv.style.display = 'flex';
+    fv.classList.add('fade-in');
+  }, 300);
+}
+
+function tornaAlMenu() {
+  const fv = document.getElementById('frame-view');
+  fv.style.display = 'none';
+  fv.classList.remove('fade-in');
+
+  const landing = document.getElementById('landing');
+  landing.style.display = 'flex';
+  landing.classList.remove('fade-out');
+  landing.style.opacity = '1';
+}
+
+// Precarica i frame in background dopo il caricamento della pagina
+window.addEventListener('load', () => {
+  // Piccolo ritardo per non bloccare il rendering del menu
+  setTimeout(precaricaFrames, 500);
+});
+</script>
+</body>
+</html>
