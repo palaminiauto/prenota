@@ -684,7 +684,7 @@ const HTML_MAN = `<!DOCTYPE html>
   <div id="sendingOverlay"><div class="spinner"></div><p>Invio dati in corso...<br>NON CHIUDERE LA PAGINA</p></div>
   <div id="formWrapper" style="display:none;">
     <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
-      <label>TIPOLOGIA CLIENTE:</label>
+      <label>TIPOLOGIA CLIENTE (intestatario del veicolo):</label>
       <div class="button-group">
         <input type="radio" name="tipologiacliente" value="PRIVATO" id="tipPrivato" onchange="aggiornaAvvisiETipologia()">
         <label for="tipPrivato">PRIVATO</label>
@@ -889,7 +889,7 @@ const HTML_REV = `<!DOCTYPE html>
     
     <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
 
-      <label>TIPOLOGIA CLIENTE:</label>
+      <label>TIPOLOGIA CLIENTE (intestatario del veicolo):</label>
       <div class="button-group">
         <input type="radio" name="tipologiacliente" value="PRIVATO" id="tipPrivato" onchange="aggiornaAvvisiETipologia()">
         <label for="tipPrivato">PRIVATO</label>
@@ -1107,7 +1107,7 @@ const HTML_PNM = `<!DOCTYPE html>
   <div id="formWrapper" style="display:none;">
     
      <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
-      <label>TIPOLOGIA CLIENTE:</label>
+      <label>TIPOLOGIA CLIENTE (intestatario del veicolo):</label>
       <div class="button-group">
         <input type="radio" name="tipologiacliente" value="PRIVATO" id="tipPrivato" onchange="aggiornaVisibilita()">
         <label for="tipPrivato">PRIVATO</label>
