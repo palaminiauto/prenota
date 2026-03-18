@@ -600,7 +600,8 @@ async function verificaEinvia() {
   const dataScelta = elData.value;
   let tuttoValido = true;
   if (!lav) { elLavorazione.classList.add("input-error"); document.getElementById("err_lavorazione").style.display = "block"; tuttoValido = false; }
-  if (lav === "annullamento" || lav === "smontmont") { if (!note) { elNote.classList.add("input-error"); document.getElementById("err_notecliente").style.display = "block"; tuttoValido = false; } }
+  const compagniaVal = document.getElementById("compagnia").value;
+  if (lav === "annullamento" || lav === "smontmont" || compagniaVal.includes("ALTRO")) { if (!note) { elNote.classList.add("input-error"); document.getElementById("err_notecliente").style.display = "block"; tuttoValido = false; } }
   if (lav && lav !== "annullamento" && !dataScelta) { elData.classList.add("input-error"); document.getElementById("err_dataAppuntamento").style.display = "block"; tuttoValido = false; }
   if (!tuttoValido) return;
   document.getElementById("sendingText").innerHTML = "Controllo disponibilit\u00e0 date in corso...<br>Attendere...";
@@ -699,7 +700,8 @@ const HTML_MAN = `<!DOCTYPE html>
         Nel campo nome e cognome indicare anche il nome del noleggio scritto sul libretto di circolazione
       </div>
       <label>TARGA AUTO:</label>
-      <input type="text" id="targa" maxlength="7" minlength="7" placeholder="Esempio: AA123BB" onchange="aggiornaStatoPrenota()" style="text-transform:uppercase;">
+      <input type="text" id="targa" maxlength="7" onchange="aggiornaStatoPrenota()" style="text-transform:uppercase;">
+      <div id="targaMsg" style="color:red; font-size:13px; margin-top:4px; text-align:center;"> Formato: AA000AA (7 caratteri)</div>      
       <label>KM AUTO:</label>
       <input type="text" inputmode="numeric" placeholder="Inserire solo numeri senza punti" id="km" onchange="aggiornaStatoPrenota()">
       <label>MARCA E MODELLO AUTO:</label>
@@ -812,6 +814,8 @@ function aggiornaAvvisiETipologia() {
 function aggiornaStatoPrenota(){
   const vf = (id) => document.getElementById(id).value.trim();
   const targaOk = vf("targa").length === 7;
+  const targaMsg = document.getElementById("targaMsg");
+  if (targaMsg) targaMsg.style.display = targaOk ? "none" : "block";
   const lavOk = document.querySelectorAll('input[name="lavorazione"]:checked').length > 0 || (altroCheck.checked && vf("altroTesto") !== "");
   const campiOk = targaOk && vf("dataAppuntamento") && vf("telefono") && vf("email") && vf("nomeCognome") && vf("km") && vf("marcaModello") && lavOk && document.querySelector('input[name="tipologiacliente"]:checked');
   document.getElementById("prenota").disabled = !campiOk;
@@ -905,7 +909,8 @@ const HTML_REV = `<!DOCTYPE html>
       </div>
 
       <label>TARGA AUTO:</label>
-      <input type="text" id="targa" maxlength="7" placeholder="Esempio: AA123BB" onchange="aggiornaStatoPrenota()" style="text-transform:uppercase;">
+      <input type="text" id="targa" maxlength="7" onchange="aggiornaStatoPrenota()" style="text-transform:uppercase;">
+      <div id="targaMsg" style="color:red; font-size:13px; margin-top:4px; text-align:center;"> Formato: AA000AA (7 caratteri) </div>
 
       <label>KM AUTO:</label>
       <input type="text" inputmode="numeric" placeholder="Inserire solo numeri senza punti" id="km" onchange="aggiornaStatoPrenota()">
@@ -1024,6 +1029,8 @@ function aggiornaAvvisiETipologia() {
 function aggiornaStatoPrenota(){
   const v = (id) => document.getElementById(id).value.trim();
   const targaOk  = v("targa").length === 7;
+  const targaMsg = document.getElementById("targaMsg");
+  if (targaMsg) targaMsg.style.display = targaOk ? "none" : "block";
   const campiOk  = targaOk && v("dataAppuntamento") && v("telefono") && v("email") && v("nomeCognome") && v("km") && v("marcaModello") && document.querySelector('input[name="tipologiacliente"]:checked');
   document.getElementById("prenota").disabled = !campiOk;
   document.getElementById("alertObbligatorio").style.display = campiOk ? "none" : "block";
@@ -1344,11 +1351,14 @@ function aggiornaRiconsegna() {
 // ═══════════════════════════════════════════════════════════════
 
 const SERVICE_TITLES = {
-  sat: '📡 Localizzatori Satellitari',
-  man: '🔧 Manutenzione Auto (Tagliando, cambio olio)',
-  pnm: '🛞 Cambio Gomme Stagionali',
-  rev: '📋 Revisione Ministeriale'
-};
+  sat: `<svg width="22" height="22" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:8px"><path d="M14 11 Q10 18 14 25" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round"/><path d="M32 11 Q36 18 32 25" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round"/><path d="M9 6 Q3 18 9 30" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" opacity="0.45"/><path d="M37 6 Q43 18 37 30" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" opacity="0.45"/><circle cx="23" cy="18" r="3.5" fill="#888"/><line x1="23" y1="21" x2="23" y2="28" stroke="#888" stroke-width="3" stroke-linecap="round"/><path d="M23 28 Q18 32 13 44" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/><path d="M23 28 Q28 32 33 44" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/><line x1="17" y1="33" x2="29" y2="33" stroke="#888" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="40" x2="32" y2="40" stroke="#888" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="44" x2="35" y2="44" stroke="#888" stroke-width="3" stroke-linecap="round"/></svg>Localizzatori Satellitari`,
+
+  man: `<svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Manutenzione Auto`,
+
+  pnm: `<svg width="22" height="22" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:8px"><circle cx="23" cy="23" r="21" fill="#222"/><circle cx="23" cy="23" r="14.5" fill="#444"/><circle cx="23" cy="23" r="13" fill="#cacaca"/><path d="M23 10 L26 21 L20 21 Z" fill="#aaa"/><path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(72 23 23)"/><path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(144 23 23)"/><path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(216 23 23)"/><path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(288 23 23)"/><circle cx="23" cy="23" r="5" fill="#999"/><circle cx="23" cy="23" r="2.5" fill="#666"/></svg>Cambio Gomme Stagionali`,
+
+  rev: `<svg width="22" height="22" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:8px"><rect x="7" y="5" width="26" height="34" rx="3" fill="#cacaca" stroke="#aaa" stroke-width="1.5"/><path d="M27 5 L33 11 L27 11 Z" fill="#aaa"/><path d="M27 5 L27 11 L33 11" fill="none" stroke="#999" stroke-width="1.5"/><rect x="16" y="3" width="8" height="5" rx="2.5" fill="#888"/><line x1="13" y1="20" x2="27" y2="20" stroke="#999" stroke-width="2" stroke-linecap="round"/><line x1="13" y1="26" x2="27" y2="26" stroke="#999" stroke-width="2" stroke-linecap="round"/><line x1="13" y1="32" x2="21" y2="32" stroke="#999" stroke-width="2" stroke-linecap="round"/><circle cx="34" cy="36" r="9" fill="#2e7d32"/><polyline points="29,36 33,40 40,30" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Revisione Ministeriale`
+};;
 
 let framesLoaded = false;
 
@@ -1379,7 +1389,7 @@ function apriServizio(servizio) {
     activeFrame.classList.add('active');
 
     // Aggiorna titolo topbar
-    document.getElementById('topbar-title').textContent = SERVICE_TITLES[servizio] || 'Prenotazione';
+    document.getElementById('topbar-title').innerHTML = SERVICE_TITLES[servizio] || 'Prenotazione';
 
     // Mostra frame-view
     const fv = document.getElementById('frame-view');
