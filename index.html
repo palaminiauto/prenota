@@ -574,6 +574,13 @@ function aggiornaVisibilita() {
 function checkConTeMessage() {
   const compagniaSel = document.getElementById("compagnia").value;
   document.getElementById("msg_conte").style.display = compagniaSel.includes("ConTe-Octo Telematics") ? "block" : "none";
+  const labelNote = document.getElementById("labelNoteCliente");
+  const lav = document.getElementById("lavorazione").value;
+  if (compagniaSel.includes("ALTRO")) {
+    labelNote.textContent = "SCRIVERE QUA IL NOME DELLA COMPAGNIA ASSICURATIVA:";
+  } else {
+    labelNote.textContent = lav === "smontmont" ? "SCRIVERE ENTRAMBE COMPAGNIE ASSICURATIVE QUA (OBBLIGATORIO):" : (lav === "annullamento" ? "DATA E ORA DELL'APPUNTAMENTO DA ANNULLARE (OBBLIGATORIO):" : "EVENTUALI NOTE CLIENTE:");
+  }
 }
 function aggiornaRiconsegna() {
   const dataTxt = document.getElementById("dataAppuntamento").value;
