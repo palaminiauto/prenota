@@ -521,15 +521,15 @@ function aggiornaLabelNote() {
 
   const parti = [];
   if (lav === "annullamento")
-    parti.push("DATA E ORA DELL'APPUNTAMENTO DA ANNULLARE (OBBLIGATORIO):");
+    parti.push("DATA E ORA DELL'APPUNTAMENTO DA ANNULLARE");
   else if (lav === "smontmont")
-    parti.push("SCRIVERE ENTRAMBE COMPAGNIE ASSICURATIVE QUA (OBBLIGATORIO):");
+    parti.push("NOME DELLE DUE COMPAGNIE ASSICURATIVE");
   if (isAltro)
-    parti.push("SCRIVERE QUA IL NOME DELLA COMPAGNIA ASSICURATIVA:");
+    parti.push("NOME DELLA COMPAGNIA ASSICURATIVA");
   if (parti.length === 0)
     parti.push("EVENTUALI NOTE CLIENTE:");
 
-  labelNote.innerHTML = parti.join("<br><br>");
+  labelNote.innerHTML = parti.join(" E ");
 }
 function avantiStep1() {
   if (!tipoLocalizzatoreSelezionato) { document.getElementById("err_tipo").style.display = 'block'; return; }
