@@ -1134,11 +1134,22 @@ const HTML_PNM = `<!DOCTYPE html>
   .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #1a73e8; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 15px; }
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   #infoRiconsegna { background: #fff3cd; border: 2px solid #ffa500; padding: 15px; margin: 15px 0; border-radius: 8px; font-weight: bold; color: #d45500; text-align: center; display: none; font-size: 16px; }
+  #dateUnavailableOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; justify-content: center; align-items: center; padding: 20px; }
+  .modal-content { background: #fff; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%; border: 3px solid #f44336; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .modal-content h3 { color: #d32f2f; margin-top: 0; }
+  .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
 </style>
 </head>
 <body onload="init()">
   <div id="loadingOverlay"><div class="spinner"></div><p>Caricamento modulo in corso...</p></div>
-  <div id="sendingOverlay"><div class="spinner"></div><p>Invio dati in corso...<br>NON CHIUDERE LA PAGINA</p></div>
+  <div id="sendingOverlay"><div class="spinner"></div><p id="sendingText">Invio dati in corso...<br>NON CHIUDERE LA PAGINA</p></div>
+<div id="dateUnavailableOverlay">
+  <div class="modal-content">
+    <h3>⚠️ DATA NON PIÙ DISPONIBILE</h3>
+    <p>La data che avevi scelto è appena stata prenotata da un altro utente.<br><br>La lista è stata aggiornata, seleziona una nuova data per favore.</p>
+    <button type="button" onclick="chiudiAvvisoData()" style="background-color: #f44336;">AVANTI</button>
+  </div>
+</div>
   <div id="formWrapper" style="display:none;">
     
      <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
@@ -1313,21 +1324,54 @@ function aggiornaStatoPrenota(){
   btn.disabled = !(targaOk && dataOk && telOk && emailOk);
   document.getElementById("alertObbligatorio").style.display = (targaOk && dataOk && telOk && emailOk) ? "none" : "block";
 }
+function chiudiAvvisoData() { document.getElementById("dateUnavailableOverlay").style.display = "none"; }
+
 async function invia(){
   const btn = document.getElementById("prenota");
   btn.disabled = true;
+  const dataScelta = document.getElementById("dataAppuntamento").value;
+
+  document.getElementById("sendingText").innerHTML = "Controllo disponibilità date in corso...<br>Attendere...";
   document.getElementById("sendingOverlay").style.display = "flex";
-  const dati = {
-    tipologiacliente: document.querySelector('input[name="tipologiacliente"]:checked')?.value || "",
-    dep: document.querySelector('input[name="dep"]:checked')?.value || "",
-    targa: document.getElementById("targa").value.trim().toUpperCase(),
-    marcaModello: document.getElementById("marcaModello").value.trim(),
-    nomeCognome: document.getElementById("nomeCognome").value.trim(),
-    email: document.getElementById("email").value.trim(),
-    telefono: document.getElementById("telefono").value.trim(),
-    dataAppuntamento: document.getElementById("dataAppuntamento").value
-  };
+
   try {
+    const checkResponse = await fetch(API_URL + '?service=pnm');
+    const checkData = await checkResponse.json();
+    const date1ora = checkData.date && checkData.date["1h"] ? checkData.date["1h"] : [];
+    const date3ore = checkData.date && checkData.date["3h"] ? checkData.date["3h"] : [];
+
+    let dataDisponibile = false;
+    if (dataScelta.includes("1 ORA")) {
+      dataDisponibile = date1ora.includes(dataScelta.replace("1 ORA fermo auto: ", ""));
+    } else if (dataScelta.includes("3 ORE")) {
+      dataDisponibile = date3ore.includes(dataScelta.replace("3 ORE fermo auto: ", ""));
+    }
+
+    if (!dataDisponibile) {
+      document.getElementById("sendingOverlay").style.display = "none";
+      document.getElementById("dateUnavailableOverlay").style.display = "flex";
+      dbTarghe = checkData.database || {};
+      dateDisponibili = unisciEOrdinaDate(date1ora, date3ore);
+      popolaDateDropdown();
+      document.getElementById("dataAppuntamento").value = "";
+      document.getElementById("infoRiconsegna").style.display = "none";
+      aggiornaStatoPrenota();
+      return;
+    }
+
+    document.getElementById("sendingText").innerHTML = "Invio dati in corso...<br>NON CHIUDERE LA PAGINA";
+
+    const dati = {
+      tipologiacliente: document.querySelector('input[name="tipologiacliente"]:checked')?.value || "",
+      dep: document.querySelector('input[name="dep"]:checked')?.value || "",
+      targa: document.getElementById("targa").value.trim().toUpperCase(),
+      marcaModello: document.getElementById("marcaModello").value.trim(),
+      nomeCognome: document.getElementById("nomeCognome").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      telefono: document.getElementById("telefono").value.trim(),
+      dataAppuntamento: dataScelta
+    };
+
     const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', service: 'pnm', dati: dati }) });
     const result = await response.json();
     document.getElementById("sendingOverlay").style.display = "none";
