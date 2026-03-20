@@ -706,11 +706,26 @@ const HTML_MAN = `<!DOCTYPE html>
   #successOverlay h2 { color: #1b5e20; font-size: 30px; font-weight: 900; margin-bottom: 20px; }
   #successOverlay p { color: #1b5e20; font-size: 22px; font-weight: 700; line-height: 1.4; }
   #errorOverlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; z-index: 300; text-align: center; padding: 40px 30px; border-radius: 12px; border: 3px solid #f44336; color: #c62828; width: 90%; max-width: 440px; }
+  #dateUnavailableOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; justify-content: center; align-items: center; padding: 20px; }
+  .modal-content { background: #fff; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%; border: 3px solid #f44336; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .modal-content h3 { color: #d32f2f; margin-top: 0; }
+  .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
 </style>
 </head>
 <body onload="init()">
   <div id="loadingOverlay"><div class="spinner"></div><p>Caricamento modulo in corso...</p></div>
-  <div id="sendingOverlay"><div class="spinner"></div><p>Invio dati in corso...<br>NON CHIUDERE LA PAGINA</p></div>
+  <!-- SOSTITUISCI: -->
+<div id="sendingOverlay"><div class="spinner"></div><p>Invio dati in corso...<br>NON CHIUDERE LA PAGINA</p></div>
+
+<!-- CON: -->
+<div id="sendingOverlay"><div class="spinner"></div><p id="sendingText">Invio dati in corso...<br>NON CHIUDERE LA PAGINA</p></div>
+<div id="dateUnavailableOverlay">
+  <div class="modal-content">
+    <h3>⚠️ DATA NON PIÙ DISPONIBILE</h3>
+    <p>La data che avevi scelto è appena stata prenotata da un altro utente.<br><br>La lista è stata aggiornata, seleziona una nuova data per favore.</p>
+    <button type="button" onclick="chiudiAvvisoData()" style="background-color: #f44336;">AVANTI</button>
+  </div>
+</div>
   <div id="formWrapper" style="display:none;">
     <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
       <label>TIPOLOGIA CLIENTE (intestatario del veicolo):</label>
@@ -849,30 +864,59 @@ function aggiornaStatoPrenota(){
   document.getElementById("prenota").disabled = !campiOk;
   document.getElementById("alertObbligatorio").style.display = campiOk ? "none" : "block";
 }
+function chiudiAvvisoData() { document.getElementById("dateUnavailableOverlay").style.display = "none"; }
+
 async function invia(){
+  document.getElementById("sendingText").innerHTML = "Controllo disponibilità date in corso...<br>Attendere...";
   document.getElementById("sendingOverlay").style.display = "flex";
-  const lavs = [];
-  document.querySelectorAll('input[name="lavorazione"]:checked').forEach(cb => lavs.push(cb.value));
-  if (altroCheck.checked) lavs.push("Altro: " + altroTesto.value);
-  const dati = {
-    tipologiacliente: document.querySelector('input[name="tipologiacliente"]:checked').value,
-    targa: vf("targa").toUpperCase(),
-    km: vf("km"),
-    marcaModello: vf("marcaModello"),
-    nomeCognome: vf("nomeCognome"),
-    email: vf("email"),
-    telefono: vf("telefono"),
-    lavorazione: lavs.join(", "),
-    dataAppuntamento: vf("dataAppuntamento"),
-    dataRiconsegna: dataRiconsegnaStimata
-  };
+
+  const dataScelta = vf("dataAppuntamento");
+
   try {
+    const checkResponse = await fetch(API_URL + '?service=man');
+    const checkData = await checkResponse.json();
+    const tutteLeDate = [...(checkData.dateFlotte || []), ...(checkData.datePrivati || [])];
+
+    if (!tutteLeDate.includes(dataScelta)) {
+      document.getElementById("sendingOverlay").style.display = "none";
+      document.getElementById("dateUnavailableOverlay").style.display = "flex";
+      dateFlotte = checkData.dateFlotte || [];
+      datePrivati = checkData.datePrivati || [];
+      popolaDateDropdown();
+      document.getElementById("dataAppuntamento").value = "";
+      document.getElementById("infoRiconsegna").style.display = "none";
+      dataRiconsegnaStimata = "";
+      aggiornaStatoPrenota();
+      return;
+    }
+
+    document.getElementById("sendingText").innerHTML = "Invio dati in corso...<br>NON CHIUDERE LA PAGINA";
+
+    const lavs = [];
+    document.querySelectorAll('input[name="lavorazione"]:checked').forEach(cb => lavs.push(cb.value));
+    if (altroCheck.checked) lavs.push("Altro: " + altroTesto.value);
+    const dati = {
+      tipologiacliente: document.querySelector('input[name="tipologiacliente"]:checked').value,
+      targa: vf("targa").toUpperCase(),
+      km: vf("km"),
+      marcaModello: vf("marcaModello"),
+      nomeCognome: vf("nomeCognome"),
+      email: vf("email"),
+      telefono: vf("telefono"),
+      lavorazione: lavs.join(", "),
+      dataAppuntamento: dataScelta,
+      dataRiconsegna: dataRiconsegnaStimata
+    };
+
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', service: 'man', dati: dati }) });
     const result = await res.json();
     document.getElementById("sendingOverlay").style.display = "none";
     if (result.success) { document.getElementById("formWrapper").style.display = "none"; document.getElementById("successOverlay").style.display = "block"; }
     else { alert("Errore salvataggio."); }
-  } catch(e) { document.getElementById("sendingOverlay").style.display = "none"; alert("Errore invio."); }
+  } catch(e) {
+    document.getElementById("sendingOverlay").style.display = "none";
+    alert("Errore invio.");
+  }
 }
 function vf(id) { return document.getElementById(id).value.trim(); }
 <\/script>
@@ -912,11 +956,22 @@ const HTML_REV = `<!DOCTYPE html>
   #successOverlay h2 { color: #1b5e20; font-size: 30px; font-weight: 900; margin-bottom: 20px; }
   #successOverlay p { color: #1b5e20; font-size: 22px; font-weight: 700; line-height: 1.4; }
   #errorOverlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; z-index: 300; text-align: center; padding: 40px 30px; border-radius: 12px; border: 3px solid #f44336; color: #c62828; width: 90%; max-width: 440px; }
+  #dateUnavailableOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; justify-content: center; align-items: center; padding: 20px; }
+  .modal-content { background: #fff; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%; border: 3px solid #f44336; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .modal-content h3 { color: #d32f2f; margin-top: 0; }
+  .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
 </style>
 </head>
 <body onload="init()">
   <div id="loadingOverlay"><div class="spinner"></div><p>Caricamento modulo in corso...</p></div>
-  <div id="sendingOverlay"><div class="spinner"></div><p>Invio dati in corso...<br>NON CHIUDERE LA PAGINA</p></div>
+  <div id="sendingOverlay"><div class="spinner"></div><p id="sendingText">Invio dati in corso...<br>NON CHIUDERE LA PAGINA</p></div>
+<div id="dateUnavailableOverlay">
+  <div class="modal-content">
+    <h3>⚠️ DATA NON PIÙ DISPONIBILE</h3>
+    <p>La data che avevi scelto è appena stata prenotata da un altro utente.<br><br>La lista è stata aggiornata, seleziona una nuova data per favore.</p>
+    <button type="button" onclick="chiudiAvvisoData()" style="background-color: #f44336;">AVANTI</button>
+  </div>
+</div>
   <div id="formWrapper" style="display:none;">
     
     <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
@@ -1064,22 +1119,47 @@ function aggiornaStatoPrenota(){
   document.getElementById("alertObbligatorio").style.display = campiOk ? "none" : "block";
 }
 
+function chiudiAvvisoData() { document.getElementById("dateUnavailableOverlay").style.display = "none"; }
+
 async function invia(){
+  document.getElementById("sendingText").innerHTML = "Controllo disponibilità date in corso...<br>Attendere...";
   document.getElementById("sendingOverlay").style.display = "flex";
-  const dati = {
-    tipologiacliente: document.querySelector('input[name="tipologiacliente"]:checked').value,
-    targa:            document.getElementById("targa").value.trim().toUpperCase(),
-    km:               document.getElementById("km").value.trim(),
-    marcaModello:     document.getElementById("marcaModello").value.trim(),
-    nomeCognome:      document.getElementById("nomeCognome").value.trim(),
-    email:            document.getElementById("email").value.trim(),
-    telefono:         document.getElementById("telefono").value.trim(),
-    lavorazione:      "REVISIONE",
-    dataAppuntamento: document.getElementById("dataAppuntamento").value.trim(),
-    dataRiconsegna:   dataRiconsegnaStimata
-  };
+
+  const dataScelta = document.getElementById("dataAppuntamento").value.trim();
+
   try {
-    const res    = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', service: 'rev', dati: dati }) });
+    const checkResponse = await fetch(API_URL + '?service=rev');
+    const checkData = await checkResponse.json();
+    const dateAttuali = checkData.dateRevisioni || [];
+
+    if (!dateAttuali.includes(dataScelta)) {
+      document.getElementById("sendingOverlay").style.display = "none";
+      document.getElementById("dateUnavailableOverlay").style.display = "flex";
+      dateRevisioni = dateAttuali;
+      popolaDateDropdown();
+      document.getElementById("dataAppuntamento").value = "";
+      document.getElementById("infoRiconsegna").style.display = "none";
+      dataRiconsegnaStimata = "";
+      aggiornaStatoPrenota();
+      return;
+    }
+
+    document.getElementById("sendingText").innerHTML = "Invio dati in corso...<br>NON CHIUDERE LA PAGINA";
+
+    const dati = {
+      tipologiacliente: document.querySelector('input[name="tipologiacliente"]:checked').value,
+      targa:            document.getElementById("targa").value.trim().toUpperCase(),
+      km:               document.getElementById("km").value.trim(),
+      marcaModello:     document.getElementById("marcaModello").value.trim(),
+      nomeCognome:      document.getElementById("nomeCognome").value.trim(),
+      email:            document.getElementById("email").value.trim(),
+      telefono:         document.getElementById("telefono").value.trim(),
+      lavorazione:      "REVISIONE",
+      dataAppuntamento: dataScelta,
+      dataRiconsegna:   dataRiconsegnaStimata
+    };
+
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', service: 'rev', dati: dati }) });
     const result = await res.json();
     document.getElementById("sendingOverlay").style.display = "none";
     if (result.success) {
