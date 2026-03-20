@@ -710,6 +710,8 @@ const HTML_MAN = `<!DOCTYPE html>
   .modal-content { background: #fff; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%; border: 3px solid #f44336; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
   .modal-content h3 { color: #d32f2f; margin-top: 0; }
   .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
+  button { flex: 1; background-color: #1a73e8; color: white; border: none; cursor: pointer; font-size: 20px; padding: 18px; border-radius: 8px; font-weight: bold; transition: all 0.3s; }
+  button:hover { background: #1557b0; }
 </style>
 </head>
 <body onload="init()">
@@ -869,6 +871,7 @@ function chiudiAvvisoData() { document.getElementById("dateUnavailableOverlay").
 async function invia(){
   document.getElementById("sendingText").innerHTML = "Controllo disponibilità date in corso...<br>Attendere...";
   document.getElementById("sendingOverlay").style.display = "flex";
+  await new Promise(r => setTimeout(r, 80));
 
   const dataScelta = vf("dataAppuntamento");
 
@@ -960,6 +963,8 @@ const HTML_REV = `<!DOCTYPE html>
   .modal-content { background: #fff; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%; border: 3px solid #f44336; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
   .modal-content h3 { color: #d32f2f; margin-top: 0; }
   .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
+  button { flex: 1; background-color: #1a73e8; color: white; border: none; cursor: pointer; font-size: 20px; padding: 18px; border-radius: 8px; font-weight: bold; transition: all 0.3s; }
+  button:hover { background: #1557b0; }
 </style>
 </head>
 <body onload="init()">
@@ -1124,6 +1129,7 @@ function chiudiAvvisoData() { document.getElementById("dateUnavailableOverlay").
 async function invia(){
   document.getElementById("sendingText").innerHTML = "Controllo disponibilità date in corso...<br>Attendere...";
   document.getElementById("sendingOverlay").style.display = "flex";
+  await new Promise(r => setTimeout(r, 80));
 
   const dataScelta = document.getElementById("dataAppuntamento").value.trim();
 
