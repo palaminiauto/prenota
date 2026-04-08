@@ -339,13 +339,53 @@
 <script>
 // ═══════════════════════════════════════════════════════════════
 // ⚙️  UNICA VARIABILE DA AGGIORNARE
-// Dopo aver deployato GAS_UNIFICATO.js come Web App,
-// incolla qui sotto l'URL che ti dà Google Apps Script.
 // ═══════════════════════════════════════════════════════════════
 const API_URL_UNIFICATO = 'https://script.google.com/macros/s/AKfycbzjxKHVPHjn18LDf-DWvC5GgD4p3oGoJvPgBweUyJHswy1OfZGhO45IlWQz7bHQgXxx/exec';
 
 // ═══════════════════════════════════════════════════════════════
-// HTML DEI TRE MODULI — __API_URL__ viene sostituito a runtime
+// CSS COMUNE per l'overlay di errore con pulsante indietro
+// (iniettato in ogni modulo tramite __ERROR_OVERLAY_STYLE__)
+// ═══════════════════════════════════════════════════════════════
+const ERROR_OVERLAY_STYLE = `
+  #gasErrorOverlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 300;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  #gasErrorOverlay .modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+    border: 3px solid #f44336;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  #gasErrorOverlay h3 { color: #d32f2f; margin-top: 0; margin-bottom: 12px; }
+  #gasErrorOverlay p  { font-size: 16px; line-height: 1.5; margin-bottom: 20px; color: #333; }
+  #gasErrorOverlay button { background-color: #1a73e8; color: white; border: none; cursor: pointer; font-size: 18px; padding: 14px 28px; border-radius: 8px; font-weight: bold; }
+  #gasErrorOverlay button:hover { background: #1557b0; }
+`;
+
+// HTML dell'overlay errore (iniettato nel body di ogni modulo)
+const ERROR_OVERLAY_HTML = `
+<div id="gasErrorOverlay">
+  <div class="modal-content">
+    <h3>❌ ERRORE NELL'INVIO</h3>
+    <p id="gasErrorMsg">Si è verificato un problema durante l'invio della prenotazione.<br><br>Controlla la tua connessione e riprova.</p>
+    <button type="button" onclick="document.getElementById('gasErrorOverlay').style.display='none'">&#8592; Torna indietro</button>
+  </div>
+</div>`;
+
+// ═══════════════════════════════════════════════════════════════
+// HTML DEI MODULI
 // ═══════════════════════════════════════════════════════════════
 
 const HTML_SAT = `<!DOCTYPE html>
@@ -384,6 +424,7 @@ const HTML_SAT = `<!DOCTYPE html>
   .modal-content { background: #fff; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%; border: 3px solid #f44336; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
   .modal-content h3 { color: #d32f2f; margin-top: 0; }
   .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
+  __ERROR_OVERLAY_STYLE__
 </style>
 </head>
 <body onload="init()">
@@ -396,6 +437,7 @@ const HTML_SAT = `<!DOCTYPE html>
     <button type="button" onclick="chiudiAvvisoData()" style="background-color: #f44336;">AVANTI</button>
   </div>
 </div>
+__ERROR_OVERLAY_HTML__
 <div id="formWrapper" style="display:none;">
   
   <form id="prenotaForm" onsubmit="return false;">
@@ -518,17 +560,11 @@ function aggiornaLabelNote() {
   const compagniaVal = document.getElementById("compagnia").value;
   const isAltro = compagniaVal.includes("ALTRO");
   const labelNote = document.getElementById("labelNoteCliente");
-
   const parti = [];
-  if (lav === "annullamento")
-    parti.push("DATA E ORA DELL'APPUNTAMENTO DA ANNULLARE");
-  else if (lav === "smontmont")
-    parti.push("NOME DELLE DUE COMPAGNIE ASSICURATIVE");
-  if (isAltro)
-    parti.push("NOME DELLA COMPAGNIA ASSICURATIVA");
-  if (parti.length === 0)
-    parti.push("EVENTUALI NOTE CLIENTE:");
-
+  if (lav === "annullamento") parti.push("DATA E ORA DELL'APPUNTAMENTO DA ANNULLARE");
+  else if (lav === "smontmont") parti.push("NOME DELLE DUE COMPAGNIE ASSICURATIVE");
+  if (isAltro) parti.push("NOME DELLA COMPAGNIA ASSICURATIVA");
+  if (parti.length === 0) parti.push("EVENTUALI NOTE CLIENTE:");
   labelNote.innerHTML = parti.join(" E ");
 }
 function avantiStep1() {
@@ -553,7 +589,7 @@ function validaCampiStep() {
     let valido = true;
     const email = document.getElementById("email");
     const errEmail = document.getElementById("err_email");
-    const regexEmail = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!regexEmail.test(email.value.trim())) { email.classList.add("input-error"); errEmail.style.display = "block"; valido = false; }
     const campiStandard = ["targa", "nomeCognome", "telefono", "compagnia"];
     for (let id of campiStandard) {
@@ -569,7 +605,6 @@ function aggiornaVisibilita() {
   const lav = document.getElementById("lavorazione").value;
   const wrap = document.getElementById("wrapperData");
   const selData = document.getElementById("dataAppuntamento");
-  const labelNote = document.getElementById("labelNoteCliente");
   aggiornaLabelNote();
   if (lav && lav !== "annullamento") {
     wrap.style.display = "block";
@@ -599,8 +634,6 @@ function aggiornaVisibilita() {
 function checkConTeMessage() {
   const compagniaSel = document.getElementById("compagnia").value;
   document.getElementById("msg_conte").style.display = compagniaSel.includes("ConTe-Octo Telematics") ? "block" : "none";
-  const labelNote = document.getElementById("labelNoteCliente");
-  const lav = document.getElementById("lavorazione").value;
   aggiornaLabelNote();
 }
 function aggiornaRiconsegna() {
@@ -609,16 +642,20 @@ function aggiornaRiconsegna() {
   const info = document.getElementById("infoRiconsegna");
   if (!dataTxt || !lav || lav === "annullamento") { info.style.display = "none"; return; }
   const durate = { montaggio: 50, smontaggio: 50, smontmont: 90, anomalia: 180 };
-  const match = dataTxt.match(/(\\d{2}):(\\d{2})/);
+  const match = dataTxt.match(/(\d{2}):(\d{2})/);
   if (match) {
     let h = parseInt(match[1]), m = parseInt(match[2]) + durate[lav];
     while (m >= 60) { m -= 60; h += 1; }
     const nuovaOra = h.toString().padStart(2,'0') + ":" + m.toString().padStart(2,'0');
-    info.innerHTML = "Data di riconsegna del veicolo stimata: " + dataTxt.replace(/(\\d{2}):(\\d{2})/, nuovaOra);
+    info.innerHTML = "Data di riconsegna del veicolo stimata: " + dataTxt.replace(/(\d{2}):(\d{2})/, nuovaOra);
     info.style.display = "block";
   }
 }
 function chiudiAvvisoData() { document.getElementById("dateUnavailableOverlay").style.display = "none"; }
+function mostraErroreGas(msg) {
+  if (msg) document.getElementById("gasErrorMsg").innerHTML = msg;
+  document.getElementById("gasErrorOverlay").style.display = "flex";
+}
 async function verificaEinvia() {
   const elLavorazione = document.getElementById("lavorazione");
   const elNote = document.getElementById("notecliente");
@@ -659,12 +696,18 @@ async function verificaEinvia() {
     };
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', service: 'sat', dati: payload }) });
     const result = await res.json();
+    document.getElementById("sendingOverlay").style.display = "none";
     if (result.success) {
       document.getElementById("formWrapper").style.display = "none";
       document.getElementById("successOverlay").style.display = "block";
-    } else { alert("Errore del server: " + result.error); }
-  } catch (e) { alert("Errore di connessione col server. Controlla la tua rete e riprova."); }
-  finally { document.getElementById("sendingOverlay").style.display = "none"; }
+    } else {
+      mostraErroreGas("Il server ha risposto con un errore:<br><br><em>" + (result.error || "Errore sconosciuto") + "</em><br><br>I tuoi dati sono ancora qui, riprova.");
+    }
+  } catch (e) {
+    document.getElementById("sendingOverlay").style.display = "none";
+    mostraErroreGas("Errore di connessione col server.<br><br>Controlla la tua rete e riprova. I tuoi dati sono ancora qui.");
+  }
+  document.getElementById("sendingOverlay").style.display = "none";
 }
 <\/script>
 </body>
@@ -705,13 +748,13 @@ const HTML_MAN = `<!DOCTYPE html>
   #successOverlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f1f8e9; z-index: 300; text-align: center; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.3); border: 4px solid #4caf50; width: 90%; max-width: 440px; }
   #successOverlay h2 { color: #1b5e20; font-size: 30px; font-weight: 900; margin-bottom: 20px; }
   #successOverlay p { color: #1b5e20; font-size: 22px; font-weight: 700; line-height: 1.4; }
-  #errorOverlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; z-index: 300; text-align: center; padding: 40px 30px; border-radius: 12px; border: 3px solid #f44336; color: #c62828; width: 90%; max-width: 440px; }
   #dateUnavailableOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; justify-content: center; align-items: center; padding: 20px; }
   .modal-content { background: #fff; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%; border: 3px solid #f44336; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
   .modal-content h3 { color: #d32f2f; margin-top: 0; }
   .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
   button { flex: 1; background-color: #1a73e8; color: white; border: none; cursor: pointer; font-size: 20px; padding: 18px; border-radius: 8px; font-weight: bold; transition: all 0.3s; }
   button:hover { background: #1557b0; }
+  __ERROR_OVERLAY_STYLE__
 </style>
 </head>
 <body onload="init()">
@@ -725,6 +768,7 @@ const HTML_MAN = `<!DOCTYPE html>
     <button type="button" onclick="chiudiAvvisoData()" style="background-color: #f44336;">AVANTI</button>
   </div>
 </div>
+__ERROR_OVERLAY_HTML__
   <div id="formWrapper" style="display:none;">
     <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
       <label>TIPOLOGIA CLIENTE (intestatario del veicolo):</label>
@@ -774,7 +818,6 @@ const HTML_MAN = `<!DOCTYPE html>
     <h2>✅ MODULO INVIATO CORRETTAMENTE</h2>
     <p>Si ricorda di presentarsi con la mail ricevuta (controllare anche lo SPAM). Grazie.</p>
   </div>
-  <div id="errorOverlay">❌ ERRORE NELL'INVIO<br><br>Riprova pi\u00f9 tardi.</div>
 <script>
 const API_URL = '__API_URL__';
 let dateFlotte = [], datePrivati = [], dataRiconsegnaStimata = "";
@@ -864,7 +907,10 @@ function aggiornaStatoPrenota(){
   document.getElementById("alertObbligatorio").style.display = campiOk ? "none" : "block";
 }
 function chiudiAvvisoData() { document.getElementById("dateUnavailableOverlay").style.display = "none"; }
-
+function mostraErroreGas(msg) {
+  if (msg) document.getElementById("gasErrorMsg").innerHTML = msg;
+  document.getElementById("gasErrorOverlay").style.display = "flex";
+}
 async function invia(){
   document.getElementById("sendingText").innerHTML = "Controllo disponibilità date in corso...<br>Attendere...";
   document.getElementById("sendingOverlay").style.display = "flex";
@@ -911,11 +957,15 @@ async function invia(){
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', service: 'man', dati: dati }) });
     const result = await res.json();
     document.getElementById("sendingOverlay").style.display = "none";
-    if (result.success) { document.getElementById("formWrapper").style.display = "none"; document.getElementById("successOverlay").style.display = "block"; }
-    else { alert("Errore salvataggio."); }
+    if (result.success) {
+      document.getElementById("formWrapper").style.display = "none";
+      document.getElementById("successOverlay").style.display = "block";
+    } else {
+      mostraErroreGas("Il server ha risposto con un errore:<br><br><em>" + (result.error || "Errore sconosciuto") + "</em><br><br>I tuoi dati sono ancora qui, riprova.");
+    }
   } catch(e) {
     document.getElementById("sendingOverlay").style.display = "none";
-    alert("Errore invio.");
+    mostraErroreGas("Errore di connessione col server.<br><br>Controlla la tua rete e riprova. I tuoi dati sono ancora qui.");
   }
 }
 function vf(id) { return document.getElementById(id).value.trim(); }
@@ -923,7 +973,7 @@ function vf(id) { return document.getElementById(id).value.trim(); }
 </body>
 </html>`;
 
- // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 const HTML_REV = `<!DOCTYPE html>
 <html>
 <head>
@@ -955,13 +1005,13 @@ const HTML_REV = `<!DOCTYPE html>
   #successOverlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f1f8e9; z-index: 300; text-align: center; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.3); border: 4px solid #4caf50; width: 90%; max-width: 440px; }
   #successOverlay h2 { color: #1b5e20; font-size: 30px; font-weight: 900; margin-bottom: 20px; }
   #successOverlay p { color: #1b5e20; font-size: 22px; font-weight: 700; line-height: 1.4; }
-  #errorOverlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; z-index: 300; text-align: center; padding: 40px 30px; border-radius: 12px; border: 3px solid #f44336; color: #c62828; width: 90%; max-width: 440px; }
   #dateUnavailableOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; justify-content: center; align-items: center; padding: 20px; }
   .modal-content { background: #fff; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%; border: 3px solid #f44336; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
   .modal-content h3 { color: #d32f2f; margin-top: 0; }
   .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
   button { flex: 1; background-color: #1a73e8; color: white; border: none; cursor: pointer; font-size: 20px; padding: 18px; border-radius: 8px; font-weight: bold; transition: all 0.3s; }
   button:hover { background: #1557b0; }
+  __ERROR_OVERLAY_STYLE__
 </style>
 </head>
 <body onload="init()">
@@ -974,6 +1024,7 @@ const HTML_REV = `<!DOCTYPE html>
     <button type="button" onclick="chiudiAvvisoData()" style="background-color: #f44336;">AVANTI</button>
   </div>
 </div>
+__ERROR_OVERLAY_HTML__
   <div id="formWrapper" style="display:none;">
     
     <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
@@ -1030,7 +1081,6 @@ const HTML_REV = `<!DOCTYPE html>
     <h2>✅ MODULO INVIATO CORRETTAMENTE</h2>
     <p>Si ricorda di presentarsi con la mail ricevuta (controllare anche lo SPAM). Grazie.</p>
   </div>
-  <div id="errorOverlay">❌ ERRORE NELL'INVIO<br><br>Riprova più tardi.</div>
 
 <script>
 const API_URL = '__API_URL__';
@@ -1122,6 +1172,10 @@ function aggiornaStatoPrenota(){
 }
 
 function chiudiAvvisoData() { document.getElementById("dateUnavailableOverlay").style.display = "none"; }
+function mostraErroreGas(msg) {
+  if (msg) document.getElementById("gasErrorMsg").innerHTML = msg;
+  document.getElementById("gasErrorOverlay").style.display = "flex";
+}
 
 async function invia(){
   document.getElementById("sendingText").innerHTML = "Controllo disponibilità date in corso...<br>Attendere...";
@@ -1168,10 +1222,12 @@ async function invia(){
     if (result.success) {
       document.getElementById("formWrapper").style.display = "none";
       document.getElementById("successOverlay").style.display = "block";
-    } else { alert("Errore salvataggio."); }
+    } else {
+      mostraErroreGas("Il server ha risposto con un errore:<br><br><em>" + (result.error || "Errore sconosciuto") + "</em><br><br>I tuoi dati sono ancora qui, riprova.");
+    }
   } catch(e) {
     document.getElementById("sendingOverlay").style.display = "none";
-    alert("Errore invio.");
+    mostraErroreGas("Errore di connessione col server.<br><br>Controlla la tua rete e riprova. I tuoi dati sono ancora qui.");
   }
 }
 <\/script>
@@ -1210,8 +1266,6 @@ const HTML_PNM = `<!DOCTYPE html>
   #targaMsg { font-weight: bold; margin-top: 5px; color: red; font-size: 16px; text-align: center; }
   #alertObbligatorio { background: #ffe6e6; border: 2px solid red; border-radius: 8px; padding: 12px; margin-top: 20px; color: red; font-weight: bold; font-size: 15px; text-align: center; width: 100%; }
   #successOverlay { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:300; text-align:center; padding:40px 30px; border-radius:12px; box-shadow:0 4px 25px rgba(0,0,0,0.3); width:90%; max-width:440px; background:#f1f8e9; border:4px solid #4caf50; color:#1b5e20; }
-  #errorOverlay { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:300; text-align:center; padding:40px 30px; border-radius:12px; box-shadow:0 4px 25px rgba(0,0,0,0.3); width:90%; max-width:440px; background:white; border:3px solid #f44336; color:#c62828; }
-  #successOverlay > div, #errorOverlay > div { background: unset; padding: 0; border-radius: 0; box-shadow: none; border: none; }
   #loadingOverlay, #sendingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e6f0fa; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-weight: 600; font-size: 20px; color: #666; }
   #sendingOverlay { display: none; }
   .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #1a73e8; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 15px; }
@@ -1221,6 +1275,7 @@ const HTML_PNM = `<!DOCTYPE html>
   .modal-content { background: #fff; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%; border: 3px solid #f44336; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
   .modal-content h3 { color: #d32f2f; margin-top: 0; }
   .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
+  __ERROR_OVERLAY_STYLE__
 </style>
 </head>
 <body onload="init()">
@@ -1233,6 +1288,7 @@ const HTML_PNM = `<!DOCTYPE html>
     <button type="button" onclick="chiudiAvvisoData()" style="background-color: #f44336;">AVANTI</button>
   </div>
 </div>
+__ERROR_OVERLAY_HTML__
   <div id="formWrapper" style="display:none;">
     
      <form id="prenotaForm" oninput="aggiornaStatoPrenota(); return false;">
@@ -1289,9 +1345,6 @@ const HTML_PNM = `<!DOCTYPE html>
   <h2 style="font-size:30px; font-weight:900; margin-bottom:20px;">✅ MODULO INVIATO CORRETTAMENTE</h2>
   <p style="font-size:22px; font-weight:700; line-height:1.5;">Si ricorda che è obbligatorio presentarsi in officina il giorno dell'appuntamento con la mail appena ricevuta (controllare anche lo SPAM).<br><br>Grazie.</p>
 </div>
-  <div id="errorOverlay">
-    <div>❌ ERRORE NELL'INVIO DEI DATI<br><br>Si \u00e8 verificato un problema durante l'invio della prenotazione.<br><br>Ti preghiamo di riprovare.</div>
-  </div>
 <script>
 const API_URL = '__API_URL__';
 let dbTarghe = {}, dateDisponibili = [], targaValida = false, targaQuantita = 0;
@@ -1408,7 +1461,10 @@ function aggiornaStatoPrenota(){
   document.getElementById("alertObbligatorio").style.display = (targaOk && dataOk && telOk && emailOk) ? "none" : "block";
 }
 function chiudiAvvisoData() { document.getElementById("dateUnavailableOverlay").style.display = "none"; }
-
+function mostraErroreGas(msg) {
+  if (msg) document.getElementById("gasErrorMsg").innerHTML = msg;
+  document.getElementById("gasErrorOverlay").style.display = "flex";
+}
 async function invia(){
   const btn = document.getElementById("prenota");
   btn.disabled = true;
@@ -1464,17 +1520,13 @@ async function invia(){
       overlay.style.display = "block";
       overlay.scrollIntoView({behavior:"smooth", block:"center"});
     } else {
-      document.getElementById("formWrapper").style.display = "none";
-      const errorOverlay = document.getElementById("errorOverlay");
-      errorOverlay.style.display = "flex";
-      errorOverlay.scrollIntoView({behavior:"smooth", block:"center"});
+      btn.disabled = false;
+      mostraErroreGas("Il server ha risposto con un errore:<br><br><em>" + (result.error || "Errore sconosciuto") + "</em><br><br>I tuoi dati sono ancora qui, riprova.");
     }
   } catch(error) {
     document.getElementById("sendingOverlay").style.display = "none";
-    document.getElementById("formWrapper").style.display = "none";
-    const errorOverlay = document.getElementById("errorOverlay");
-    errorOverlay.style.display = "flex";
-    errorOverlay.scrollIntoView({behavior:"smooth", block:"center"});
+    btn.disabled = false;
+    mostraErroreGas("Errore di connessione col server.<br><br>Controlla la tua rete e riprova. I tuoi dati sono ancora qui.");
   }
 }
 function aggiornaRiconsegna() {
@@ -1485,14 +1537,14 @@ function aggiornaRiconsegna() {
   let oreDaAggiungere = 0;
   if (valore.includes("1 ORA")) oreDaAggiungere = 1;
   else if (valore.includes("3 ORE")) oreDaAggiungere = 3;
-  const matchOra = valore.match(/(\\d{2}):(\\d{2})/);
+  const matchOra = valore.match(/(\d{2}):(\d{2})/);
   if (matchOra) {
     let ore = parseInt(matchOra[1]);
     let minuti = parseInt(matchOra[2]);
     ore += oreDaAggiungere;
     const nuovaOraFmt = ore.toString().padStart(2, '0') + ":" + minuti.toString().padStart(2, '0');
     let dataPulita = valore.split("fermo auto: ")[1];
-    let riconsegnaTesto = dataPulita.replace(/(\\d{2}):(\\d{2})/, nuovaOraFmt);
+    let riconsegnaTesto = dataPulita.replace(/(\d{2}):(\d{2})/, nuovaOraFmt);
     info.innerHTML = "Data di riconsegna del veicolo stimata:<br>" + riconsegnaTesto;
     info.style.display = "block";
   }
@@ -1513,40 +1565,41 @@ const SERVICE_TITLES = {
   pnm: `<svg width="22" height="22" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:8px"><circle cx="23" cy="23" r="21" fill="#222"/><circle cx="23" cy="23" r="14.5" fill="#444"/><circle cx="23" cy="23" r="13" fill="#cacaca"/><path d="M23 10 L26 21 L20 21 Z" fill="#aaa"/><path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(72 23 23)"/><path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(144 23 23)"/><path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(216 23 23)"/><path d="M23 10 L26 21 L20 21 Z" fill="#aaa" transform="rotate(288 23 23)"/><circle cx="23" cy="23" r="5" fill="#999"/><circle cx="23" cy="23" r="2.5" fill="#666"/></svg>Cambio Gomme Stagionali`,
 
   rev: `<svg width="22" height="22" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:8px"><rect x="7" y="5" width="26" height="34" rx="3" fill="#cacaca" stroke="#aaa" stroke-width="1.5"/><path d="M27 5 L33 11 L27 11 Z" fill="#aaa"/><path d="M27 5 L27 11 L33 11" fill="none" stroke="#999" stroke-width="1.5"/><rect x="16" y="3" width="8" height="5" rx="2.5" fill="#888"/><line x1="13" y1="20" x2="27" y2="20" stroke="#999" stroke-width="2" stroke-linecap="round"/><line x1="13" y1="26" x2="27" y2="26" stroke="#999" stroke-width="2" stroke-linecap="round"/><line x1="13" y1="32" x2="21" y2="32" stroke="#999" stroke-width="2" stroke-linecap="round"/><circle cx="34" cy="36" r="9" fill="#2e7d32"/><polyline points="29,36 33,40 40,30" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Revisione Ministeriale`
-};;
+};
 
 let framesLoaded = false;
 
+function injectHtml(html) {
+  return html
+    .replaceAll('__API_URL__', API_URL_UNIFICATO)
+    .replaceAll('__ERROR_OVERLAY_STYLE__', ERROR_OVERLAY_STYLE)
+    .replaceAll('__ERROR_OVERLAY_HTML__', ERROR_OVERLAY_HTML);
+}
+
 function precaricaFrames() {
   if (framesLoaded) return;
-  // Inietta l'URL unificato in tutti e tre i moduli (sostituisce il placeholder __API_URL__)
-  const injectUrl = (html) => html.replaceAll('__API_URL__', API_URL_UNIFICATO);
-  document.getElementById('frame-sat').srcdoc = injectUrl(HTML_SAT);
-  document.getElementById('frame-man').srcdoc = injectUrl(HTML_MAN);
-  document.getElementById('frame-pnm').srcdoc = injectUrl(HTML_PNM);
-  document.getElementById('frame-rev').srcdoc = injectUrl(HTML_REV);
+  document.getElementById('frame-sat').srcdoc = injectHtml(HTML_SAT);
+  document.getElementById('frame-man').srcdoc = injectHtml(HTML_MAN);
+  document.getElementById('frame-pnm').srcdoc = injectHtml(HTML_PNM);
+  document.getElementById('frame-rev').srcdoc = injectHtml(HTML_REV);
   framesLoaded = true;
 }
 
 function apriServizio(servizio) {
   precaricaFrames();
 
-  // Nascondi landing
   const landing = document.getElementById('landing');
   landing.classList.add('fade-out');
 
   setTimeout(() => {
     landing.style.display = 'none';
 
-    // Nascondi tutti i frame, mostra quello giusto
     document.querySelectorAll('.service-frame').forEach(f => f.classList.remove('active'));
     const activeFrame = document.getElementById('frame-' + servizio);
     activeFrame.classList.add('active');
 
-    // Aggiorna titolo topbar
     document.getElementById('topbar-title').innerHTML = SERVICE_TITLES[servizio] || 'Prenotazione';
 
-    // Mostra frame-view
     const fv = document.getElementById('frame-view');
     fv.style.display = 'flex';
     fv.classList.add('fade-in');
@@ -1564,9 +1617,7 @@ function tornaAlMenu() {
   landing.style.opacity = '1';
 }
 
-// Precarica i frame in background dopo il caricamento della pagina
 window.addEventListener('load', () => {
-  // Piccolo ritardo per non bloccare il rendering del menu
   setTimeout(precaricaFrames, 500);
 });
 </script>
