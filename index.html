@@ -589,8 +589,13 @@ function validaCampiStep() {
     let valido = true;
     const email = document.getElementById("email");
     const errEmail = document.getElementById("err_email");
-    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regexEmail.test(email.value.trim())) { email.classList.add("input-error"); errEmail.style.display = "block"; valido = false; }
+
+    // Controlla semplicemente se il valore inserito NON contiene la '@'
+    if (!email.value.includes('@')) { 
+    email.classList.add("input-error"); 
+    errEmail.style.display = "block"; 
+    valido = false;
+    }
     const campiStandard = ["targa", "nomeCognome", "telefono", "compagnia"];
     for (let id of campiStandard) {
       const el = document.getElementById(id);
